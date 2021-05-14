@@ -1,0 +1,26 @@
+"0","```r
+# Libraries
+library(tidyverse)
+library(lubridate)
+library(purrr)
+library(psych)
+library(GPArotation)
+
+# Files
+
+q_18month_cs_file <- \"~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/survey_18month/raw_data/mo18_survey_cs_complete.csv\"
+q_18month_long_file <- \"~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/survey_18month/raw_data/mo18_survey_lg_20201229.csv\"
+demographics_file <- \"~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/demographics/dob_sex_race_final.csv\"
+
+theme_lena <-
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    plot.title = element_text(size = 18, hjust = .5),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 16),
+    legend.title = element_text(size = 18), 
+    legend.text = element_text(size = 16),
+    legend.position = \"bottom\"
+  )
+```"

@@ -1,0 +1,11 @@
+"0","```r
+itsea_subscales <- 
+  itsea %>% 
+  arrange(ID) %>% 
+  dplyr::select( 
+    itsea_activity:itsea_social
+  ) 
+
+itsea_sub_corr <-
+  cor(itsea_subscales)
+```"

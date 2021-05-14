@@ -1,0 +1,679 @@
+---
+title: "Score CBQ"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#Libraries
+library(tidyverse)
+
+#Files 
+cbq_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBQ/raw_data/cbq_cbqem_raw_data_20210322.csv"
+```
+
+# Read in data
+```{r}
+cbq <-
+  read_csv(cbq_file) %>% 
+  filter(!is.na(cbq_timestamp)) 
+
+##replace decline to answer (88) and -888 (NA) values with NA
+cbq[cbq == -888] <- NA
+cbq[cbq == 88] <- NA
+```
+
+# Reverse score items
+```{r}
+cbq <-
+  cbq %>% 
+  mutate_at(
+    vars(
+      cbq_18,
+      cbq_50,
+      cbq_93,
+      cbq_61,
+      cbq_90,
+      cbq_92,
+      cbq_16,
+      cbq_21,
+      cbq_84,
+      cbq_3,
+      cbq_49,
+      cbq_91,
+      cbq_25,
+      cbq_34,
+      cbq_75,
+      cbq_35,
+      cbq_68,
+      cbq_78,
+      cbq_36,
+      cbq_43,
+      cbq_82,
+      cbq_53,
+      cbq_83,
+      cbq_54,
+      cbq_56,
+      cbq_74,
+      cbq_11,
+      cbq_60,
+      cbq_19,
+      cbq_48,
+      cbq_80,
+      cbq_em_8,
+      cbq_em_9,
+      cbq_em_12,
+      cbq_em_13
+    ), 
+    list(
+      "r" =
+        . %>% 
+        recode(
+          "7" = 1, 
+          "6" = 2, 
+          "5" = 3, 
+          "4" = 4, 
+          "3" = 5, 
+          "2" = 6, 
+          "1" = 7
+        )
+    )
+  )
+
+
+```
+
+# Count missing items
+Skips, "not applicable," and "decline to answer" all coded to missing. 
+```{r}
+cbq <-
+  cbq %>% 
+  mutate(
+    cbq_activity_miss = pmap_dbl(
+      select(., c("cbq_1", "cbq_12", "cbq_18_r", "cbq_22", "cbq_50_r", "cbq_85", "cbq_93_r")), 
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_anger_miss = pmap_dbl(
+      select(., c("cbq_2", "cbq_14", "cbq_30", "cbq_40", "cbq_61_r", "cbq_87")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_approach_miss = pmap_dbl(
+      select(., c("cbq_6", "cbq_15", "cbq_46", "cbq_58", "cbq_90_r", "cbq_92_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_attention_miss = pmap_dbl(
+      select(., c("cbq_16_r", "cbq_21_r", "cbq_62", "cbq_71", "cbq_84_r", "cbq_89")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_discomfort_miss = pmap_dbl(
+      select(., c("cbq_3_r", "cbq_9", "cbq_29", "cbq_49_r", "cbq_64", "cbq_91_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_sooth_miss = pmap_dbl(
+      select(., c("cbq_25_r", "cbq_34_r", "cbq_44", "cbq_59", "cbq_66", "cbq_75_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_fear_miss = pmap_dbl(
+      select(., c("cbq_17", "cbq_23", "cbq_35_r", "cbq_41", "cbq_63", "cbq_68_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_highpleasure_miss = pmap_dbl(
+      select(., c("cbq_4", "cbq_10", "cbq_33", "cbq_69", "cbq_78_r", "cbq_88")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_impulse_miss = pmap_dbl(
+      select(., c("cbq_7", "cbq_28", "cbq_36_r", "cbq_43_r", "cbq_51", "cbq_82_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_inhibit_miss = pmap_dbl(
+      select(., c("cbq_38", "cbq_45", "cbq_53_r", "cbq_67", "cbq_73", "cbq_81")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_lowpleasure_miss = pmap_dbl(
+      select(., c("cbq_26", "cbq_39", "cbq_57", "cbq_65", "cbq_72", "cbq_76", "cbq_86", "cbq_94")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_sensitivity_miss = pmap_dbl(
+      select(., c("cbq_5", "cbq_13", "cbq_24", "cbq_32", "cbq_47", "cbq_83_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_sadness_miss = pmap_dbl(
+      select(., c("cbq_8", "cbq_20", "cbq_27", "cbq_31", "cbq_54_r", "cbq_56_r", "cbq_74_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_shyness_miss = pmap_dbl(
+      select(., c("cbq_11_r", "cbq_37", "cbq_42", "cbq_52", "cbq_60_r", "cbq_70")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_smile_miss = pmap_dbl(
+      select(., c("cbq_19_r", "cbq_48_r", "cbq_55", "cbq_77", "cbq_79", "cbq_80_r")),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    ),
+    cbq_empathy_miss = pmap_dbl(
+      select(
+        ., c(
+          "cbq_em_1", 
+          "cbq_em_2", 
+          "cbq_em_3", 
+          "cbq_em_4", 
+          "cbq_em_5", 
+          "cbq_em_6",
+          "cbq_em_7",
+          "cbq_em_8_r",
+          "cbq_em_9_r",
+          "cbq_em_10",
+          "cbq_em_11",
+          "cbq_em_12_r",
+          "cbq_em_13_r",
+          "cbq_em_13"
+        )
+      ),
+      function(...) sum(is.na(c(...)), na.rm = TRUE)
+    )
+  )
+```
+
+# Reliability of subscales
+
+## Activity Level
+Level of gross motor activity including rate and extent of locomotion.
+```{r}
+cbq %>% 
+  select(
+    cbq_1, cbq_12, cbq_18_r, cbq_22, cbq_50_r, cbq_85, cbq_93_r 
+  ) %>% 
+  psych::alpha()
+```
+## Anger/Frustration
+Amount of negative affect related to interruption of ongoing tasks or goal blocking.
+```{r}
+cbq %>% 
+  select(
+    cbq_2, cbq_14, cbq_30, cbq_40, cbq_61_r, cbq_87
+  ) %>% 
+  psych::alpha()
+```
+
+## Approach/Positive Anticipation
+Amount of excitement and positive anticipation for expected pleasurable activities.
+```{r}
+cbq %>% 
+  select(
+    cbq_6, cbq_15, cbq_46, cbq_58, cbq_90_r, cbq_92_r
+  ) %>% 
+  psych::alpha()
+```
+
+## Attentional Focusing
+Tendency to maintain attentional focus upon task-related channels.
+```{r}
+cbq %>% 
+  select(
+    cbq_16_r, cbq_21_r, cbq_62, cbq_71, cbq_84_r, cbq_89
+  ) %>% 
+  psych::alpha()
+```
+
+## Discomfort
+Amount of negative affect related to sensory qualities of stimulation, including intensity, rate or complexity of light, movement, sound, texture.
+```{r}
+cbq %>% 
+  select(
+    cbq_3_r, cbq_9, cbq_29, cbq_49_r, cbq_64, cbq_91_r
+  ) %>% 
+  psych::alpha()
+```
+## Falling Reactivity/Soothability
+Rate of recovery from peak distress, excitement, or general arousal.
+```{r}
+cbq %>% 
+  select(
+    cbq_25_r, cbq_34_r, cbq_44, cbq_59, cbq_66, cbq_75_r
+  ) %>% 
+  psych::alpha()
+```
+
+## Fear
+Amount of negative affect, including unease, worry or nervousness related to anticipated pain or distress and/or potentially threatening situations.
+```{r}
+cbq %>% 
+  select(
+    cbq_17, cbq_23, cbq_35_r, cbq_41, cbq_63, cbq_68_r
+  ) %>% 
+  psych::alpha()
+```
+
+## High intensity pleasure
+Amount of pleasure or enjoyment related to situations involving high stimulus intensity, rate, complexity, novelty and incongruity.
+```{r}
+cbq %>% 
+  select(
+    cbq_4, cbq_10, cbq_33, cbq_69, cbq_78_r, cbq_88
+  ) %>% 
+  psych::alpha()
+```
+
+## Impulsivity
+Speed of response initiation.
+```{r}
+cbq %>% 
+  select(
+    cbq_7, cbq_28, cbq_36_r, cbq_43_r, cbq_51, cbq_82_r
+  ) %>% 
+  psych::alpha()
+```
+
+## Inhibitory Control
+The capacity to plan and to suppress inappropriate approach responses under instructions or in novel or uncertain situations.
+```{r}
+cbq %>% 
+  select(
+    cbq_38, cbq_45, cbq_53_r, cbq_67, cbq_73, cbq_81
+  ) %>% 
+  psych::alpha()
+```
+
+## Low Intensity Pleasure
+Amount of pleasure or enjoyment related to situations involving low stimulus intensity, rate, complexity, novelty and incongruity.
+```{r}
+cbq %>% 
+  select(
+    cbq_26, cbq_39, cbq_57, cbq_65, cbq_72, cbq_76, cbq_86, cbq_94
+  ) %>% 
+  psych::alpha()
+```
+
+## Perceptual Sensitivity
+Detection of slight, low-intensity stimuli from the external environment.
+```{r}
+cbq %>% 
+  select(
+    cbq_5, cbq_13, cbq_24, cbq_32, cbq_47, cbq_83_r
+  ) %>% 
+  psych::alpha()
+```
+
+## Sadness
+Amount of negative affect and lowered mood and energy related to exposure to suffering, disappointment and object loss.
+```{r}
+cbq %>% 
+  select(
+    cbq_8, cbq_20, cbq_27, cbq_31, cbq_54_r, cbq_56_r, cbq_74_r
+  ) %>% 
+  psych::alpha()
+```
+## Shyness
+Slow or inhibited approach in situations involving novelty or uncertainty.
+```{r}
+cbq %>% 
+  select(
+    cbq_11_r, cbq_37, cbq_42, cbq_52, cbq_60_r, cbq_70
+  ) %>% 
+  psych::alpha()
+```
+
+## Smiling and Laughter
+```{r}
+cbq %>% 
+  select(
+    cbq_19_r, cbq_48_r, cbq_55, cbq_77, cbq_79, cbq_80_r
+  ) %>% 
+  psych::alpha()
+```
+
+## Empathy
+Amount of matching or complementary reaction to the emotions of others.
+```{r}
+cbq %>% 
+  select(
+    cbq_em_1, 
+    cbq_em_2, 
+    cbq_em_3, 
+    cbq_em_4, 
+    cbq_em_5, 
+    cbq_em_6,
+    cbq_em_7,
+    cbq_em_8_r,
+    cbq_em_9_r,
+    cbq_em_10,
+    cbq_em_11,
+    cbq_em_12_r,
+    cbq_em_13_r,
+    cbq_em_14
+  ) %>% 
+  psych::alpha()
+```
+    
+# Score subscales
+Only receive score if at least 80% of items per subscale are non-missing. 
+```{r}
+cbq <-
+  cbq %>% 
+  mutate(
+    cbq_activity = if_else(
+      cbq_activity_miss > 6, NA_real_, 
+      pmap_dbl(
+        select(., c("cbq_1", "cbq_12", "cbq_18_r", "cbq_22", "cbq_50_r", "cbq_85", "cbq_93_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_anger = if_else(
+      cbq_anger_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_2", "cbq_14", "cbq_30", "cbq_40", "cbq_61_r", "cbq_87")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_approach = if_else(
+      cbq_approach_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_6", "cbq_15", "cbq_46", "cbq_58", "cbq_90_r", "cbq_92_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_attention = if_else(
+      cbq_attention_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_16_r", "cbq_21_r", "cbq_62", "cbq_71", "cbq_84_r", "cbq_89")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_discomfort = if_else(
+      cbq_discomfort_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_3_r", "cbq_9", "cbq_29", "cbq_49_r", "cbq_64", "cbq_91_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_sooth = if_else(
+      cbq_sooth_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_25_r", "cbq_34_r", "cbq_44", "cbq_59", "cbq_66", "cbq_75_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_fear = if_else(
+      cbq_fear_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_17", "cbq_23", "cbq_35_r", "cbq_41", "cbq_63", "cbq_68_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_highpleasure = if_else(
+      cbq_highpleasure_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_4", "cbq_10", "cbq_33", "cbq_69", "cbq_78_r", "cbq_88")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_impulse = if_else(
+      cbq_impulse_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_7", "cbq_28", "cbq_36_r", "cbq_43_r", "cbq_51", "cbq_82_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_inhibit = if_else(
+      cbq_inhibit_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_38", "cbq_45", "cbq_53_r", "cbq_67", "cbq_73", "cbq_81")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_lowpleasure = if_else(
+      cbq_lowpleasure_miss > 7, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_26", "cbq_39", "cbq_57", "cbq_65", "cbq_72", "cbq_76", "cbq_86", "cbq_94")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_sensitivity = if_else(
+      cbq_sensitivity_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_5", "cbq_13", "cbq_24", "cbq_32", "cbq_47", "cbq_83_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_sadness = if_else(
+      cbq_sadness_miss > 6, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_8", "cbq_20", "cbq_27", "cbq_31", "cbq_54_r", "cbq_56_r", "cbq_74_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_shyness = if_else(
+      cbq_shyness_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_11_r", "cbq_37", "cbq_42", "cbq_52", "cbq_60_r", "cbq_70")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_smile = if_else(
+      cbq_smile_miss > 5, NA_real_,
+      pmap_dbl(
+        select(., c("cbq_19_r", "cbq_48_r", "cbq_55", "cbq_77", "cbq_79", "cbq_80_r")),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    ),
+    cbq_empathy = if_else(
+      cbq_empathy_miss > 12, NA_real_,
+      pmap_dbl(
+        select(
+          ., c(
+            "cbq_em_1", 
+            "cbq_em_2", 
+            "cbq_em_3", 
+            "cbq_em_4", 
+            "cbq_em_5", 
+            "cbq_em_6",
+            "cbq_em_7",
+            "cbq_em_8_r",
+            "cbq_em_9_r",
+            "cbq_em_10",
+            "cbq_em_11",
+            "cbq_em_12_r",
+            "cbq_em_13_r",
+            "cbq_em_14"
+          )
+        ),
+        function(...) mean(c(...), na.rm = TRUE)
+      )
+    )
+  )
+
+```
+
+# Reliability of "Big 3" factors
+
+## Surgency
+```{r}
+cbq %>% 
+  mutate(
+    cbq_37_r = 8 - cbq_37,
+    cbq_42_r = 8 - cbq_42,
+    cbq_54_r = 8 - cbq_52,
+    cbq_70_r = 8 - cbq_70
+  ) %>% 
+  select(
+    cbq_1, cbq_12, cbq_18_r, cbq_22, cbq_50_r, cbq_85, cbq_93_r,
+    cbq_4, cbq_10, cbq_33, cbq_69, cbq_78_r, cbq_88,
+    cbq_7, cbq_28, cbq_36_r, cbq_43_r, cbq_51, cbq_82_r,
+    cbq_11, cbq_37, cbq_42, cbq_52, cbq_60, cbq_70
+  ) %>% 
+  psych::alpha()
+```
+
+## Negative Affectivity
+```{r}
+cbq %>% 
+  mutate(
+    cbq_44_r = 8 - cbq_44,
+    cbq_59_r = 8 - cbq_59,
+    cbq_66_r = 8 - cbq_66
+  ) %>% 
+  select(
+    cbq_2, cbq_14, cbq_30, cbq_40, cbq_61_r, cbq_87,
+    cbq_3_r, cbq_9, cbq_29, cbq_49_r, cbq_64, cbq_91_r,
+    cbq_17, cbq_23, cbq_35_r, cbq_41, cbq_63, cbq_68_r,
+    cbq_8, cbq_20, cbq_27, cbq_31, cbq_54_r, cbq_56_r, cbq_74_r,
+    cbq_25, cbq_34, cbq_44_r, cbq_59_r, cbq_66_r, cbq_75
+  ) %>% 
+  psych::alpha()
+```
+
+## Effortful Control
+```{r}
+cbq %>% 
+  select(
+    cbq_16_r, cbq_21_r, cbq_62, cbq_71, cbq_84_r, cbq_89,
+    cbq_38, cbq_45, cbq_53_r, cbq_67, cbq_73, cbq_81,
+    cbq_26, cbq_39, cbq_57, cbq_65, cbq_72, cbq_76, cbq_86, cbq_94,
+    cbq_5, cbq_13, cbq_24, cbq_32, cbq_47, cbq_83_r
+  ) %>% 
+  psych::alpha()
+```
+
+
+# Score "Big 3" factors
+Only calculate if all subscales are non-missing.
+```{r}
+cbq <-
+  cbq %>% 
+  group_by(id) %>% 
+  mutate(
+    cbq_shyness_r = 8 - cbq_shyness,
+    cbq_sooth_r = 8 - cbq_sooth,
+    cbq_surgency = if_else(
+      is.na(cbq_activity) & is.na(cbq_highpleasure) & is.na(cbq_impulse) & is.na(cbq_shyness),
+      NA_real_,
+      mean(c(cbq_activity, cbq_highpleasure, cbq_impulse, cbq_shyness_r))
+    ),
+    cbq_negativeaff = if_else(
+      is.na(cbq_anger) & is.na(cbq_discomfort) & is.na(cbq_fear) & is.na(cbq_sadness) & is.na(cbq_sooth),
+      NA_real_,
+      mean(c(cbq_anger, cbq_discomfort, cbq_fear, cbq_sadness, cbq_sooth_r))
+    ),
+    cbq_control = if_else(
+      is.na(cbq_attention) & is.na(cbq_inhibit) & is.na(cbq_lowpleasure) & is.na(cbq_sensitivity),
+      NA_real_,
+      mean(c(cbq_attention, cbq_inhibit, cbq_lowpleasure, cbq_sensitivity))
+    )
+  ) %>% 
+  ungroup()
+```
+
+# Distributions
+
+## Subscale histograms
+```{r}
+cbq %>% 
+  select(
+    cbq_activity:cbq_empathy
+  ) %>% 
+  pivot_longer(
+    cols = cbq_activity:cbq_empathy,
+    names_to = "subscale"
+  ) %>% 
+  mutate(
+    subscale = str_replace(subscale, "cbq_", "")
+  ) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 1) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 12)
+  ) +
+  facet_wrap(.~subscale) +
+  labs(
+    x = "Subscale score"
+  )
+
+ggsave(
+  "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBQ/subscale_histograms.png",
+  height = 7,
+  width = 9
+)
+
+cbq$cbq_negativeaff
+``` 
+
+## "Big 3" factor histograms
+```{r}
+cbq %>% 
+  select(
+    cbq_surgency, cbq_negativeaff, cbq_control
+  ) %>% 
+  pivot_longer(
+    cols = cbq_surgency:cbq_control,
+    names_to = "subscale"
+  ) %>% 
+  mutate(
+    subscale = str_replace(subscale, "cbq_", "")
+  ) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 1) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 12)
+  ) +
+  facet_wrap(.~subscale) +
+  labs(
+    x = "Score"
+  )
+
+ggsave(
+  "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBQ/big3_histograms.png",
+  height = 4,
+  width = 8
+)
+```
+
+# Export data
+```{r}
+cbq <-
+  cbq %>% 
+  select(
+    id,
+    cbq_timestamp,
+    cbq_1, cbq_12, cbq_18_r, cbq_22, cbq_50_r, cbq_85, cbq_93_r,
+    cbq_2, cbq_14, cbq_30, cbq_40, cbq_61_r, cbq_87,
+    cbq_6, cbq_15, cbq_46, cbq_58, cbq_90_r, cbq_92_r,
+    cbq_16_r, cbq_21_r, cbq_62, cbq_71, cbq_84_r, cbq_89,
+    cbq_3_r, cbq_9, cbq_29, cbq_49_r, cbq_64, cbq_91_r,
+    cbq_25_r, cbq_34_r, cbq_44, cbq_59, cbq_66, cbq_75_r,
+    cbq_17, cbq_23, cbq_35_r, cbq_41, cbq_63, cbq_68_r,
+    cbq_4, cbq_10, cbq_33, cbq_69, cbq_78_r, cbq_88,
+    cbq_7, cbq_28, cbq_36_r, cbq_43_r, cbq_51, cbq_82_r,
+    cbq_38, cbq_45, cbq_53_r, cbq_67, cbq_73, cbq_81,
+    cbq_26, cbq_39, cbq_57, cbq_65, cbq_72, cbq_76, cbq_86, cbq_94,
+    cbq_5, cbq_13, cbq_24, cbq_32, cbq_47, cbq_83_r,
+    cbq_8, cbq_20, cbq_27, cbq_31, cbq_54_r, cbq_56_r, cbq_74_r,
+    cbq_11_r, cbq_37, cbq_42, cbq_52, cbq_60_r, cbq_70,
+    cbq_19_r, cbq_48_r, cbq_55, cbq_77, cbq_79, cbq_80_r,
+    cbq_em_1, 
+    cbq_em_2, 
+    cbq_em_3, 
+    cbq_em_4, 
+    cbq_em_5, 
+    cbq_em_6,
+    cbq_em_7,
+    cbq_em_8_r,
+    cbq_em_9_r,
+    cbq_em_10,
+    cbq_em_11,
+    cbq_em_12_r,
+    cbq_em_13_r,
+    cbq_em_14,
+    cbq_activity:cbq_empathy,
+    cbq_surgency:cbq_control
+  )
+```
+
+
+
+```{r}
+write_csv(cbq, "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBQ/cbq_cbqem_scored_20210322.csv")
+```

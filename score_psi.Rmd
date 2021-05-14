@@ -1,0 +1,115 @@
+---
+title: "Score the Parenting Stress Index"
+output: html_notebook
+---
+
+```{r}
+# Libraries
+library(tidyverse)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+psi_file <- paste0(home, "PSI/raw_data/psi_raw_data_20210512.csv")
+```
+
+# Read in data 
+
+```{r}
+p <-
+  read_csv(psi_file) %>% 
+  select(-redcap_survey_identifier:-redcap_event_name, -psi_complete) %>% 
+  filter(!is.na(psi_timestamp))
+
+##replace decline to answer (88) and -888 (NA) values with NA
+p[p == 88] <- NA
+```
+
+# Score
+
+## recode
+
+Raw PSI is coded so that higher scores mean LESS distress; thus, reverse score all items
+Make lowest score = 0 
+```{r}
+p <-
+  p %>% 
+  mutate_at(
+    vars(psi_1:last_col()),
+    funs(
+      . %>%
+        recode("5" = 0, "4" = 1, "3" = 2, "2" = 3, "1" = 4)
+    )
+  )
+```
+
+## score subscales
+```{r}
+p <-
+  p %>% 
+  mutate(
+    psi_pd = pmap_dbl(
+      select(., c(psi_1:psi_12)), #parental distress
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_cdi = pmap_dbl(
+      select(., c(psi_13:psi_24)),  #parent-child dysfunctional interaction
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_dc = pmap_dbl(
+      select(., c(psi_25:psi_36)),  #difficult child
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_total = pmap_dbl(
+      select(., c(psi_1:psi_36)),  #total
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 36
+  )
+```
+
+# Reliability
+
+## Parental distress
+```{r}
+p %>% 
+  select(psi_1:psi_12) %>% 
+  psych::alpha()
+```
+
+## Parent-child dysfunctional interaction
+```{r}
+p %>% 
+  select(psi_13:psi_24) %>% 
+  psych::alpha()
+```
+
+## Difficult child
+```{r}
+p %>% 
+  select(psi_25:psi_36) %>% 
+  psych::alpha()
+```
+
+## Total 
+```{r}
+p %>% 
+  select(psi_1:psi_36) %>% 
+  psych::alpha()
+```
+# Visualize distributions
+```{r}
+p %>% 
+  select(psi_pd:psi_total) %>% 
+  gather(key, value) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 3) +
+  facet_wrap(.~key, scales = "free")
+```
+# Export data
+```{r}
+write_csv(
+  p,
+  paste0(home, "PSI/psi_scored_20210512.csv")
+)
+```
+
+

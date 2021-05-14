@@ -1,0 +1,616 @@
+---
+title: "Score Parent-Child Stress Interview: Basic Scoring; Filter events by age of occurance"
+author: "Lucy S. King; Edited by Andrew Lynn" 
+output: html_notebook
+
+#Edited by Andrew Lynn April 2021
+## Added filter for stressor events and severity by age at a prior visit
+## Added variables that sort stressor events and severity by parent childhood and parent adulthood
+## Added variables to include only maltreatment (and mistreatment by others) stressors for both parent and child
+---
+- Parent exposure to 41 types of events; in addition, two "other" events = 43 parent events
+- Whether 39 of these events happened during pregnancy (excluded foster case/adoption [childhood only], bullying [childhood only], abortion, ill_child_exp_dir [happend after birth of target child])
+- Whether 40 of these events happened since child's birth (excluded foster case/adoption [childhood only], bullying [childhood only], ill_child_exp_dir [happend after birth of target child])
+- Whether child hear or saw 38 of these events (excluded foster case/adoption [childhood only], bullying [childhood only], ill_child_exp_dir [happened directly to target child], job [parent being fired/laif off -- very unlikely to be seen or heard]; money [cannot be seen or heard])
+- Child direct exposure to 15 types of events 
+
+# Read in and organize raw data 
+```{r}
+library(tidyverse)
+
+# stress interview file
+pcsi_data_file <- "/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/StressInterview_data_DDK2SNP.csv"
+
+# participant info files across two studies (i.e., SNP & DDK2)
+subjinfoSNPY1 <- read_csv("/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/ParticipantInfo_SNPY1_data.csv")
+subjinfoDDK2 <- read_csv("/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/ParticipantInfo_DDK2_data.csv")
+subjinfo <- rbind(subjinfoSNPY1,subjinfoDDK2)
+
+# Extract child participant's age at behavioral visit (Y1)
+childageY1 <- dplyr::select(subjinfo, record_id, age)
+
+# SES files across two studies (i.e., SNP & DDK2)
+sesSNPY1 <- read_csv("/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/ParentSES_SNPY1_data.csv")
+sesDDK2 <- read_csv("/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/ParentSES_DDK2_data.csv")
+ses <- rbind(sesSNPY1,sesDDK2)
+
+# Extract parent participant's age at behavioral visit (Y1)
+adultageY1 <- dplyr::select(ses, record_id, adult1_age)
+
+# Merge child and parent age and rename
+age <- merge(adultageY1,childageY1, by="record_id")
+age <- rename(age, parentageY1 = adult1_age)
+age <- rename(age, childageY1 = age)
+
+# Read in Stress Interview data, except redcap event name, and clean up subject IDs (record_id)
+d0 <- read_csv(pcsi_data_file)
+d0 <- dplyr::select(d0,-redcap_event_name)
+d0 <- d0 %>% separate(record_id, "record_id", extra="drop")
+
+# Merge age data with Stress Interview data
+d0 <- merge(age,d0,by="record_id")
+
+# Rename age variables to reflect current to time of filling out Stress Interview
+d0 <- rename(d0, parentageCURRENT = age)
+d0 <- rename(d0, childageCURRENT = childsage)
+d0 <- rename(d0, parentageBIRTH = age_at_subjects_birth)
+
+# convert variables to numeric
+d0 <-
+  d0 %>%
+  mutate_at(
+    vars(
+      disaster:other1,
+      other1_freq:other2,
+      other2_freq:sexab_child_sev_dir
+    ),
+    as.numeric
+  )
+
+# Filter out participants with incomplete Stress Interview data
+d0 <- 
+  d0 %>% 
+  filter(pcsi_complete > 0
+  )
+```
+# Create filter matrix for events that occured before behavioral visit (Y1)
+```{r}
+
+# Select age of onset variables for each stressor, clean up variable name, sort columns alphabetically 
+parent_age_onset <-
+  d0 %>% 
+  select(contains("age_onset")) %>% 
+  names()
+parent_age_onset <- d0[parent_age_onset]
+names(parent_age_onset) <- sapply(str_split(names(parent_age_onset),"_", 2), `[`, 1)
+parent_age_onset <- parent_age_onset[,sort(names(parent_age_onset))]
+
+# Recode age of onset = 0 as .01
+## This is necessary because a 0 may indicate that this event has occurred the parent's entire life, NOT that it didn't occur.
+parent_age_onset[parent_age_onset == 0] <- .01
+
+# Recode blank responses (NA) as 0. 
+## Zeros now indicate the stressor did not occur 
+parent_age_onset[is.na(parent_age_onset)] <- 0
+
+# Initialize matrix, verified age of onset occurred at or prior to parent's age at behavioral visit (Y1)
+parent_age_verified <- data.frame(matrix(NA, nrow = nrow(parent_age_onset), ncol = ncol(parent_age_onset)))
+names(parent_age_verified) <- names(parent_age_onset)
+
+# Create a binary matrix that indicates age of onset occurred at or prior to parent's age at behavioral visit (Y1)
+for(i in seq_len(ncol(parent_age_onset))) {
+
+  parent_age_verified[i] <- as.data.frame(lapply(parent_age_onset[i],`<=`, d0$parentageY1))*1
+  
+}
+
+```
+
+# Create filter matrix for events that occured in Parent's childhood and adulthood
+```{r}
+# Create functions that compare a integer to two other integers, returns TRUE,FALSE
+childhood.func = function(x) {(x < 18 & x > 0)}
+adulthood.func = function(x) {(x >= 18 & x <= d0$parentageY1)}
+
+# Initialize matrix, verified age of onset occurred in parent's childhood
+parent_childhood <- data.frame(matrix(NA, nrow = nrow(parent_age_onset), ncol = ncol(parent_age_onset)))
+names(parent_childhood) <- names(parent_age_onset)
+
+# Initialize matrix, verified age of onset occurred in parent's adulthood
+parent_adulthood <- data.frame(matrix(NA, nrow = nrow(parent_age_onset), ncol = ncol(parent_age_onset)))
+names(parent_adulthood) <- names(parent_age_onset)
+
+# Create binary matrices that indicates age of onset occurred during parent's childhood or adulthood
+for(i in seq_len(ncol(parent_age_onset))) {
+
+  parent_childhood[i] <- as.data.frame(lapply(parent_age_onset[i],childhood.func))*1
+  parent_adulthood[i] <- as.data.frame(lapply(parent_age_onset[i],adulthood.func))*1
+  
+ }
+
+```
+
+# Filter Parent types to include only those that occured by the age of parent at behavioral visit (Y1). 
+## This is necessary because parents filled out PSCI after behavioral visit (Y1). The duration of time between behavioral visit (Y1) and parent completion of PCSI varies from a few week to a few years.
+
+```{r}
+
+# Select parent stressor variables for each stressor, clean up variable name, sort columns alphabetically 
+parent_types <-
+  d0 %>% 
+  dplyr::select(
+    disaster:death,
+    bully:other1,
+    other2
+  ) %>% 
+  names()
+parent_types <- d0[parent_types]
+names(parent_types) <- sapply(str_split(names(parent_types),"_", 2), `[`, 1)
+parent_types <- parent_types[,sort(names(parent_types))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate the stressor did not occur 
+parent_types[is.na(parent_types)] <- 0
+
+# Initialize matrix, verified stressor occurred at or prior to parent's age at behavioral visit (Y1)
+parent_types_verified <- data.frame(matrix(NA, nrow = nrow(parent_types), ncol = ncol(parent_types)))
+names(parent_types_verified) <- names(parent_types)
+
+# Create a binary matrix that indicates a stressor occurred at or prior to parent's age at behavioral visit (Y1)
+for(i in seq_len(ncol(parent_types))) {
+  
+  parent_types_verified[i] <- parent_age_verified[i] * ((parent_types[i] > 0 & parent_age_onset[i] > 0)*1)
+  
+ }
+
+``` 
+
+# Filter Parent types to include only those that occured during Childhood or Adulthood, seperately. 
+```{r}
+
+# Initialize matrix, verified stressor occurred during parent's childhood
+parent_childhood_types_verified <- data.frame(matrix(NA, nrow = nrow(parent_types_verified), ncol = ncol(parent_types_verified)))
+names(parent_childhood_types_verified) <- names(parent_types_verified)
+
+# Initialize matrix, verified stressor occurred during parent's adulthood
+parent_adulthood_types_verified <- data.frame(matrix(NA, nrow = nrow(parent_types_verified), ncol = ncol(parent_types_verified)))
+names(parent_adulthood_types_verified) <- names(parent_types_verified)
+
+
+# Create binary matrices that indicate a stressor occurred during parent's childhood or adulthood
+for(i in seq_len(ncol(parent_types_verified))) {
+  
+  parent_childhood_types_verified[i] <- parent_childhood[i] * parent_types_verified[i]
+  parent_adulthood_types_verified[i] <- parent_adulthood[i] * parent_types_verified[i]
+  
+ }
+
+```
+
+# Filter Parent severity ratings to include only those that occured by the age of parent at behavioral visit (Y1).  
+```{r}
+
+# Select parent stressor severity variables for each stressor, clean up variable name, sort columns alphabetically
+parent_sev_ratings <- 
+  d0 %>% 
+  select(contains("_sev")) %>% 
+  select(-contains("_sev_wit")) %>% 
+  select(-contains("_sev_dir")) %>% 
+  names()
+parent_sev_ratings <- d0[parent_sev_ratings]
+names(parent_sev_ratings) <- sapply(str_split(names(parent_sev_ratings),"_", 2), `[`, 1)
+parent_sev_ratings <- parent_sev_ratings[,sort(names(parent_sev_ratings))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate the stressor did not have meaningful impact on parent
+parent_sev_ratings[is.na(parent_sev_ratings)] <- 0
+
+# Initialize matrix, verified severity rating for stressors that occurred at or prior to parent's age at behavioral visit (Y1)
+parent_sev_verified <- data.frame(matrix(NA, nrow = nrow(parent_sev_ratings), ncol = ncol(parent_sev_ratings)))
+names(parent_sev_verified) <- names(parent_sev_ratings)
+
+# Create matrix that indicates severity rating for stressors that occurred at or prior to parent's age at behavioral visit 
+## severity matrices are not binary. Ratings range from 0 - 3, with larger numbers indicating more severe stressor
+for(i in seq_len(ncol(parent_sev_ratings))) {
+  
+  parent_sev_verified[i] <- parent_types_verified[i] * parent_sev_ratings[i]
+  
+ }
+
+```
+
+# Filter Parent severity ratings to include only those that occured during childhood and adulthood, seperately.  
+```{r}
+
+# Initialize matrix, verified severity rating for stressors that occurred during parent's childhood
+parent_childhood_sev_verified <- data.frame(matrix(NA, nrow = nrow(parent_sev_verified), ncol = ncol(parent_sev_verified)))
+names(parent_childhood_sev_verified) <- names(parent_sev_verified)
+
+# Initialize matrix, verified severity rating for stressors that occurred during parent's adulthood
+parent_adulthood_sev_verified <- data.frame(matrix(NA, nrow = nrow(parent_sev_verified), ncol = ncol(parent_sev_verified)))
+names(parent_adulthood_sev_verified) <- names(parent_sev_verified)
+
+# Create matrices that indicate severity rating for stressors that occurred during parent's childhood or adulthood
+## severity matrices are not binary. Ratings range from 0 - 3, with larger numbers indicating more severe stressor
+for(i in seq_len(ncol(parent_sev_verified))) {
+  
+  parent_childhood_sev_verified[i] <- parent_childhood[i] * parent_sev_verified[i]
+  parent_adulthood_sev_verified[i] <- parent_adulthood[i] * parent_sev_verified[i]
+  
+ }
+
+```
+
+# Filter Parent since child types  to include only those that occured by the age of parent at behavioral visit (Y1).  
+```{r}
+
+# Select variables for parent stressors that occurred since child was born, clean up variable name, sort columns alphabetically
+since_child_types <-
+  d0 %>% 
+  select(contains("since_child")) %>% 
+  names()
+since_child_types <- d0[since_child_types]
+names(since_child_types) <- sapply(str_split(names(since_child_types),"_", 2), `[`, 1)
+since_child_types <- since_child_types[,sort(names(since_child_types))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate the stressor did not occur since child was born
+since_child_types[is.na(since_child_types)] <- 0
+
+# Exclude events that could NOT have happened since child's birth (e.g., parent was adopted)
+sub_parent_types_verified <- parent_types_verified[,names(since_child_types)]
+
+# Initialize matrix, verified stressor occurred since child was born AND at or prior to parent's age at behavioral visit (Y1)
+since_child_types_verified <- data.frame(matrix(NA, nrow = nrow(since_child_types), ncol = ncol(since_child_types)))
+names(since_child_types_verified) <- names(since_child_types)
+
+# Create a binary matrix that indicates a stressor occurred since child was born AND at or prior to parent's age at behavioral visit (Y1)
+for(i in seq_len(ncol(since_child_types))) {
+  
+  since_child_types_verified[i] <- sub_parent_types_verified[i] * since_child_types[i]
+  
+}
+
+```
+
+# Filter Parent types witnessed by child  to include only those that occured by the age of parent at behavioral visit (Y1).  
+```{r}
+
+# Select parent stressor variables that child witnessed, clean up variable name, sort columns alphabetically
+child_wit_types <-
+  d0 %>% 
+  select(contains("exp_wit")) %>% 
+  names()
+child_wit_types <- d0[child_wit_types]
+names(child_wit_types) <- sapply(str_split(names(child_wit_types),"_", 2), `[`, 1)
+child_wit_types <- child_wit_types[,sort(names(child_wit_types))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate child did not witness parent's stressor (if it occurred)
+child_wit_types[is.na(child_wit_types)] <- 0
+
+# Exclude events that could NOT have happened since child's birth (e.g., parent was adopted)
+sub_parent_types_verified <- parent_types_verified[,names(child_wit_types)]
+
+# Initialize matrix, verified parent stressor witnessed by child AND occurred at or prior to parent's age at behavioral visit (Y1)
+child_wit_types_verified <- data.frame(matrix(NA, nrow = nrow(child_wit_types), ncol = ncol(child_wit_types)))
+names(child_wit_types_verified) <- names(child_wit_types)
+
+# Create a binary matrix that indicates a parent stressor witnessed by child AND occurred at or prior to parent's age at behavioral visit (Y1)
+for(i in seq_len(ncol(child_wit_types))) {
+  
+  child_wit_types_verified[i] <- sub_parent_types_verified[i] * child_wit_types[i]
+  
+}
+
+```
+
+
+# recode children's age of direct stressors to years 
+## this is necessary because parents may report child's age in months or years
+```{r}
+
+# Select age at which child directly experienced stressor, clean up variable name, sort columns alphabetically 
+child_age_dir <-
+  d0 %>% 
+  select(contains("age_dir")) %>% 
+  select(-contains("age_dir_unit")) %>% 
+  names()
+child_age_dir <- d0[child_age_dir]
+names(child_age_dir) <- sapply(str_split(names(child_age_dir),"_", 2), `[`, 1)
+child_age_dir <- child_age_dir[,sort(names(child_age_dir))]
+
+# Recode age of onset = 0 as .01
+## This is necessary because a 0 may indicate that this event has occurred the child's entire life, NOT that it didn't occur.
+child_age_dir[child_age_dir == 0] <- .01
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate child did not directly experience stressor
+child_age_dir[is.na(child_age_dir)] <- 0
+
+# Select variables to indicate which age unit parents report child directly experienced stressor (i.e., months = 1 or years = 2), clean up variable name, sort columns alphabetically 
+child_age_dir_unit <-
+  d0 %>% 
+  select(contains("age_dir_unit")) %>% 
+  names()
+child_age_dir_unit <- d0[child_age_dir_unit]
+names(child_age_dir_unit) <- sapply(str_split(names(child_age_dir_unit),"_", 2), `[`, 1)
+child_age_dir_unit <- child_age_dir_unit[,sort(names(child_age_dir_unit))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate child did not directly experience stressor
+child_age_dir_unit[is.na(child_age_dir_unit)] <- 0
+
+# Initialize matrix, age at which child directly experienced stressor in years
+child_age_dir_corrected <- data.frame(matrix(NA, nrow = nrow(child_age_dir), ncol = ncol(child_age_dir)))
+names(child_age_dir_corrected) <- names(child_age_dir)
+
+# convert age at which child directly experienced stressor to years 
+for(i in seq_len(ncol(child_age_dir))) {
+  
+  tmp <- cbind(child_age_dir[i], child_age_dir_unit[i])
+  names(tmp) <- c("age","unit")
+  
+  # if parent reported age in months then divide by 12, otherwise keep age in years
+  tmp <- transform(tmp, age_years=ifelse(unit==1, age/12, age*1))
+  
+  child_age_dir_corrected[i] <- tmp$age_years
+  
+}
+
+# Initialize matrix, verified child age which child directly experienced stressors occurred at or prior to child's age at behavioral visit (Y1)
+child_age_verified <- data.frame(matrix(NA, nrow = nrow(child_age_dir_corrected), ncol = ncol(child_age_dir_corrected)))
+names(child_age_verified) <- names(child_age_dir_corrected)
+
+
+# Create a binary matrix that indicates age stressor directly experienced by child occurred at or prior to child's age at behavioral visit (Y1)
+for(i in seq_len(ncol(child_age_dir_corrected))) {
+
+  child_age_verified[i] <- as.data.frame(lapply(child_age_dir_corrected[i],`<=`, d0$childageY1))*1
+  
+ }
+
+
+```
+
+
+# Filter Child types directly experienced by child  to include only those that occured by the age of child at behavioral visit (Y1).  
+```{r}
+
+# Select stressors that child directly experienced, clean up variable name, sort columns alphabetically
+child_dir_exp_types <-
+   d0 %>% 
+  select(contains("exp_dir")) %>% 
+  names()
+child_dir_exp_types <- d0[child_dir_exp_types]
+names(child_dir_exp_types) <- sapply(str_split(names(child_dir_exp_types),"_", 2), `[`, 1)
+child_dir_exp_types <- child_dir_exp_types[,sort(names(child_dir_exp_types))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate child did not directly experience stressor
+child_dir_exp_types[is.na(child_dir_exp_types)] <- 0
+
+# for some reason "NO" responses are coded as '2' for "acc_child_exp_dir" -- recode '2' as a '0'
+child_dir_exp_types[child_dir_exp_types == 2] <- 0
+
+# Initialize matrix, verified child directly experienced stressor AND stressor occurred at or prior to child's age at behavioral visit (Y1)
+child_dir_exp_types_verified <- data.frame(matrix(NA, nrow = nrow(child_dir_exp_types), ncol = ncol(child_dir_exp_types)))
+names(child_dir_exp_types_verified) <- names(child_dir_exp_types)
+
+# Create binary matrix that indicates child directly experienced stressor AND stressor occurred at or prior to child's age at behavioral visit (Y1)
+for(i in seq_len(ncol(child_dir_exp_types))) {
+
+  child_dir_exp_types_verified[i] <- child_age_verified[i] * child_dir_exp_types[i]
+  
+ }
+
+
+```
+
+# Filter Child severity witnessed ratings to include only those that occured by the age of parent at behavioral visit (Y1).  
+```{r}
+
+# Select severity variables for parent stressors witnessed by the child, clean up variable name, sort columns alphabetically
+child_wit_sev <-
+  d0 %>% 
+  select(
+    contains("child_sev_wit")
+  ) %>% 
+  names()
+child_wit_sev <- d0[child_wit_sev]
+names(child_wit_sev) <- sapply(str_split(names(child_wit_sev),"_", 2), `[`, 1)
+child_wit_sev <- child_wit_sev[,sort(names(child_wit_sev))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate the witnessing parent's stressor did not have meaningful impact on child
+child_wit_sev[is.na(child_wit_sev)] <- 0
+
+# Initialize matrix, verified severity rating for parent stressors witnessed by child that occurred at or prior to parent's age at behavioral visit (Y1)
+child_wit_sev_verified <- data.frame(matrix(NA, nrow = nrow(child_wit_sev), ncol = ncol(child_wit_sev)))
+names(child_wit_sev_verified) <- names(child_wit_sev)
+
+# Create matrix that indicates severity rating for parent stressors witnessed by child that occurred at or prior to parent's age at behavioral visit 
+## severity matrices are not binary. Ratings range from 0 - 3, with larger numbers indicating more severe stressor
+for(i in seq_len(ncol(child_wit_sev))) {
+
+  child_wit_sev_verified[i] <- parent_age_verified[i] * child_wit_sev[i]
+  
+ }
+
+```
+
+# Filter Child severity directly experienced ratings to include only those that occured by the age of child at behavioral visit (Y1).  
+```{r}
+
+# Select severity variables for stressors directly experienced by the child, clean up variable name, sort columns alphabetically
+child_dir_sev <-
+  d0 %>% 
+  select(
+    contains("child_sev_dir")
+  ) %>% 
+  names()
+child_dir_sev <- d0[child_dir_sev]
+names(child_dir_sev) <- sapply(str_split(names(child_dir_sev),"_", 2), `[`, 1)
+child_dir_sev <- child_dir_sev[,sort(names(child_dir_sev))]
+
+# Recode blank responses (NA) as 0. 
+## Zeros indicate the stressor did not have meaningful impact on child
+child_dir_sev[is.na(child_dir_sev)] <- 0
+
+# Initialize matrix, verified severity rating for stressors directly experienced by child that occurred at or prior to child's age at behavioral visit (Y1)
+child_dir_sev_verified <- data.frame(matrix(NA, nrow = nrow(child_dir_sev), ncol = ncol(child_dir_sev)))
+names(child_dir_sev_verified) <- names(child_dir_sev)
+
+# Create matrix that indicates severity rating for stressors directly experienced by child that occurred at or prior to child's age at behavioral visit 
+## severity matrices are not binary. Ratings range from 0 - 3, with larger numbers indicating more severe stressor
+for(i in seq_len(ncol(child_dir_sev))) {
+
+  child_dir_sev_verified[i] <- parent_age_verified[i] * child_dir_sev[i]
+  
+ }
+
+```
+
+# Score
+
+```{r}
+## Parent: Number of types of stressors overall 
+parent_num_types <- rowSums(parent_types_verified)
+parent_num_types <- as.data.frame(parent_num_types)
+
+## Parent: Number of types of stressors that occurred during parent's childhood
+parent_childhood_num_types <- rowSums(parent_childhood_types_verified)
+parent_childhood_num_types <- as.data.frame(parent_childhood_num_types)
+
+## Parent: Number of types of stressors that occurred during parent's adulthood
+parent_adulthood_num_types <- rowSums(parent_adulthood_types_verified)
+parent_adulthood_num_types <- as.data.frame(parent_adulthood_num_types)
+
+## Parent: Number of maltreatment stressors that occurred overall
+parent_maltreat_num_types <- parent_types_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums()
+parent_maltreat_num_types <- as.data.frame(parent_maltreat_num_types)
+
+## Parent: Number of maltreatment stressors that occurred during parent's childhood
+parent_maltreat_childhood_num_types <- parent_childhood_types_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums()
+parent_maltreat_childhood_num_types <- as.data.frame(parent_maltreat_childhood_num_types)
+
+## Parent: Number of maltreatment stressors that occurred during parent's adulthood
+parent_maltreat_adulthood_num_types <- parent_adulthood_types_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums()
+parent_maltreat_adulthood_num_types <- as.data.frame(parent_maltreat_adulthood_num_types)
+
+## Parent: Number of mistreatment by others stressors that occurred overall
+parent_mistreatbyothers_num_types <- parent_types_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_mistreatbyothers_num_types <- as.data.frame(parent_mistreatbyothers_num_types)
+
+## Parent: Number of mistreatment by others stressors that occurred during parent's childhood
+parent_mistreatbyothers_childhood_num_types <- parent_childhood_types_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_mistreatbyothers_childhood_num_types <- as.data.frame(parent_mistreatbyothers_childhood_num_types)
+
+## Parent: Number of mistreatment by others stressors that occurred during parent's adulthood
+parent_mistreatbyothers_adulthood_num_types <- parent_adulthood_types_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_mistreatbyothers_adulthood_num_types <- as.data.frame(parent_mistreatbyothers_adulthood_num_types)
+
+## Parent: Number of types of stressors since child's birth
+since_child_num_types <- rowSums(since_child_types_verified)
+since_child_num_types <- as.data.frame(since_child_num_types)
+
+## Parent: Number of types of maltreatment stressors since child's birth 
+since_child_maltreat_num_types <- since_child_types_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums()
+since_child_maltreat_num_types <- as.data.frame(since_child_maltreat_num_types)
+
+## Child: number of types of parental stressors seen or heard (witnessed)
+child_wit_num_types <- rowSums(child_wit_types_verified)
+child_wit_num_types <- as.data.frame(child_wit_num_types)
+
+## Child: number of types of parental maltreatment stressors witnessed
+child_wit_maltreat_num_types <- child_wit_types_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums()
+child_wit_maltreat_num_types <- as.data.frame(child_wit_maltreat_num_types)
+
+## Child: number of types of stressors directly exposed
+### does not include witnessing parent stressors
+child_dir_num_types <- rowSums(child_dir_exp_types_verified)
+child_dir_num_types <- as.data.frame(child_dir_num_types)
+
+## Child: Number of types of maltreatment stressors directly experienced by the child
+child_dir_maltreat_num_types <- child_dir_exp_types_verified %>% select(emoab,emoneg,physab,physneg,spank,bully) %>% rowSums()
+child_dir_maltreat_num_types <- as.data.frame(child_dir_maltreat_num_types)
+
+## Child: number of types of witnessed parental stressors and directly experienced stressors 
+child_num_types <- child_wit_num_types + child_dir_num_types
+names(child_num_types) <- c("child_num_types")
+
+## Child: number of types of witnessed parental maltreatment stressors and directly experienced maltreatment stressors
+child_maltreat_num_types <- child_wit_maltreat_num_types + child_dir_maltreat_num_types
+names(child_maltreat_num_types) <- c("child_maltreat_num_types")
+
+## Parent: summed subjective severity overall
+parent_sum_sev <- rowSums(parent_sev_verified)
+parent_sum_sev <- as.data.frame(parent_sum_sev)
+
+## Parent: summed subjective severity for childhood stressors
+parent_childhood_sum_sev <- rowSums(parent_childhood_sev_verified)
+parent_childhood_sum_sev <- as.data.frame(parent_childhood_sum_sev)
+
+## Parent: summed subjective severity for adulthood stressors
+parent_adulthood_sum_sev <- rowSums(parent_adulthood_sev_verified)
+parent_adulthood_sum_sev <- as.data.frame(parent_adulthood_sum_sev)
+
+## Parent: summed subjective severity for maltreatment stressors during childhood
+parent_childhood_maltreat_sum_sev <- parent_childhood_sev_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums() 
+parent_childhood_maltreat_sum_sev <- as.data.frame(parent_childhood_maltreat_sum_sev)
+
+## Parent: summed subjective severity for maltreatment stressors during adulthood
+parent_adulthood_maltreat_sum_sev <- parent_adulthood_sev_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums() 
+parent_adulthood_maltreat_sum_sev <- as.data.frame(parent_adulthood_maltreat_sum_sev)
+
+## Parent: summed subjective severity for mistreatment by others overall
+parent_mistreatbyothers_sum_sev <- parent_sev_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_mistreatbyothers_sum_sev <- as.data.frame(parent_mistreatbyothers_sum_sev)
+
+## Parent: summed subjective severity for mistreatment by others during childhood
+parent_childhood_mistreatbyothers_sum_sev <- parent_childhood_sev_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_childhood_mistreatbyothers_sum_sev <- as.data.frame(parent_childhood_mistreatbyothers_sum_sev)
+
+## Parent: summed subjective severity for mistreatment by others during adulthood
+parent_adulthood_mistreatbyothers_sum_sev <- parent_adulthood_sev_verified %>% select(police,discrimin,sep,bully,partnerverb,partnerctrl,mug) %>% rowSums()
+parent_adulthood_mistreatbyothers_sum_sev <- as.data.frame(parent_adulthood_mistreatbyothers_sum_sev)
+
+## Child: summed subjected severity for witnessed parent stressors
+child_wit_sum_sev <- rowSums(child_wit_sev_verified)
+child_wit_sum_sev <- as.data.frame(child_wit_sum_sev)
+
+## Child: summed subjective severity for witnessed parental maltreatment stressors
+child_wit_maltreat_sum_sev <- child_wit_sev_verified %>% select(emoab,emoneg,physab,physneg,sexharas,sextouch,rape) %>% rowSums() 
+child_wit_maltreat_sum_sev <- as.data.frame(child_wit_maltreat_sum_sev)
+
+## Child: summed subjected severity for directly experienced stressors
+child_dir_sum_sev <- rowSums(child_dir_sev_verified)
+child_dir_sum_sev <- as.data.frame(child_dir_sum_sev)
+
+## Child: summed subjective severity for directly experienced maltreatment stressors
+child_dir_maltreat_sum_sev <- child_dir_sev_verified %>% select(emoab,emoneg,physab,physneg,spank,bully) %>% rowSums()
+child_dir_maltreat_sum_sev <- as.data.frame(child_dir_maltreat_sum_sev)
+
+## Child: summed subjective severity for witnessed parent stressors and directly experienced stressors
+child_sum_sev <- child_dir_sum_sev + child_wit_sum_sev
+names(child_sum_sev) <- c("child_sum_sev")
+
+## Child: summed subjective severity for witnessed parental maltreatment stressors and directly experienced maltreatment stressors
+child_maltreat_sum_sev <- child_wit_maltreat_sum_sev + child_dir_maltreat_sum_sev
+names(child_maltreat_sum_sev) <- c("child_maltreat_sum_sev")
+
+```
+
+
+## Export summary scores to csv file
+```{r}
+
+record_id <- as.data.frame(d0$record_id)
+names(record_id) <- c("record_id")
+
+scored <- cbind(record_id, parent_num_types,	parent_childhood_num_types,	parent_adulthood_num_types,	parent_maltreat_num_types,	parent_maltreat_childhood_num_types,	parent_maltreat_adulthood_num_types,	parent_mistreatbyothers_num_types,	parent_mistreatbyothers_childhood_num_types,	parent_mistreatbyothers_adulthood_num_types,	since_child_num_types,	since_child_maltreat_num_types,	child_wit_num_types,	child_wit_maltreat_num_types,	child_dir_num_types,	child_dir_maltreat_num_types,	child_num_types,	child_maltreat_num_types,	parent_sum_sev,	parent_childhood_sum_sev,	parent_adulthood_sum_sev,	parent_childhood_maltreat_sum_sev,	parent_adulthood_maltreat_sum_sev,	parent_mistreatbyothers_sum_sev,	parent_childhood_mistreatbyothers_sum_sev,	parent_adulthood_mistreatbyothers_sum_sev,	child_wit_sum_sev,	child_wit_maltreat_sum_sev,	child_dir_sum_sev,	child_dir_maltreat_sum_sev,	child_sum_sev,	child_maltreat_sum_sev)
+
+write.csv(scored,"/Users/andrewlynn/Documents/Projects/ELS_AcademicAchievement/data/StressInterview_ageverified_scored_27APR2021.csv", row.names = FALSE)
+
+```
+

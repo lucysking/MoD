@@ -1,0 +1,61 @@
+"0","a <-"
+"0","  read_csv(apca_file) %>% "
+"0","  mutate_at("
+"0","    vars("
+"0","      disaster:other1,"
+"0","      other1_freq:other2,"
+"0","      other2_freq:sexab_child_sev_dir"
+"0","    ),"
+"0","    as.numeric"
+"0","  ) %>% "
+"0","  mutate_at("
+"0","    vars(contains(""since_child"")),"
+"0","    as.numeric"
+"0","  ) %>% "
+"0","  rename("
+"0","    disas = disaster,"
+"0","    lang = language,"
+"0","    pardivorce_age_onset = pardivorce_age_once,"
+"0","    divorce_age_onset = divorce_age_once,"
+"0","    authority_child_age_wit = authoriy_child_age_wit"
+"0","  ) "
+"2","
+[36m──[39m [1m[1mColumn specification[1m[22m [36m────────────────────────────────────────────────────[39m
+cols(
+  .default = col_double(),
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  apca_timestamp = [31mcol_character()[39m,
+  other1_desc = [31mcol_character()[39m,
+  other1_child_age_wit = [33mcol_logical()[39m,
+  other1_child_age_wit_unit = [33mcol_logical()[39m,
+  other1_child_exp_wit = [33mcol_logical()[39m,
+  other1_child_sev_wit = [33mcol_logical()[39m,
+  other2_desc = [31mcol_character()[39m,
+  jail_child_age_wit = [33mcol_logical()[39m,
+  jail_child_age_wit_unit = [33mcol_logical()[39m,
+  jail_child_exp_wit = [33mcol_logical()[39m,
+  jail_child_sev_wit = [33mcol_logical()[39m,
+  police_child_age_wit = [33mcol_logical()[39m,
+  police_child_age_wit_unit = [33mcol_logical()[39m,
+  police_child_exp_wit = [33mcol_logical()[39m,
+  police_child_sev_wit = [33mcol_logical()[39m,
+  adopt_age_offset = [33mcol_logical()[39m,
+  ill_length = [31mcol_character()[39m,
+  ill_child_length = [31mcol_character()[39m
+  # ... with 27 more columns
+)
+[36mℹ[39m Use [38;5;235m[48;5;253m[38;5;235m[48;5;253m`spec()`[48;5;253m[38;5;235m[49m[39m for the full column specifications.
+
+"
+"2","NAs introduced by coercion"
+"2","NAs introduced by coercion"
+"2","NAs introduced by coercion"
+"0","##replace decline to answer (88) and -888 (NA) values with NA"
+"0","a[a == 88] <- NA"
+"0",""
+"0","N <- "
+"0","  a %>% "
+"0","  count() %>% "
+"0","  pull(n)"
+"0",""

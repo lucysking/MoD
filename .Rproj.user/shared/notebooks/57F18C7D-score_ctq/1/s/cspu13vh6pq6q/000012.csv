@@ -1,0 +1,4 @@
+"0","```r
+ctq %>% 
+  identify_outliers_hist(ctq_total)
+```"

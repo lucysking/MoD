@@ -1,0 +1,29 @@
+"0","```r
+ctq <-
+  read_csv(ctq_crossectional_file) %>% 
+  bind_rows(
+    read_csv(ctq_longitudinal_file)
+  ) %>% 
+  rename(ID = record_id) %>% 
+  mutate(ID = as.numeric(ID))
+```"
+"1","Parsed with column specification:
+cols(
+  .default = col_double(),
+  record_id = [31mcol_character()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  ctq_timestamp = [34mcol_datetime(format = \"\")[39m
+)
+See spec(...) for full column specifications.
+Parsed with column specification:
+cols(
+  .default = col_double(),
+  record_id = [31mcol_character()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  ctq_timestamp = [34mcol_datetime(format = \"\")[39m
+)
+See spec(...) for full column specifications.
+NAs introduced by coercion
+"

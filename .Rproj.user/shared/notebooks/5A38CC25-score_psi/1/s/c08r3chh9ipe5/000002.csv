@@ -1,0 +1,31 @@
+"0","```r
+```r
+psi <-
+  read_csv(psi_6mo_cs_file) %>% 
+  select(-redcap_survey_identifier:-psi_timestamp, -psi_complete) %>% 
+  bind_rows(
+    read_csv(psi_6mo_long_file) %>% 
+      select(-redcap_survey_identifier:-psi_timestamp, -psi_complete)
+  ) %>% 
+  rename(ID = record_id)
+```
+```"
+"1","Parsed with column specification:
+cols(
+  .default = col_double(),
+  record_id = [31mcol_character()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  psi_timestamp = [34mcol_datetime(format = \\)[39m
+)
+See spec(...) for full column specifications.
+Parsed with column specification:
+cols(
+  .default = col_double(),
+  record_id = [31mcol_character()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  psi_timestamp = [34mcol_datetime(format = \\)[39m
+)
+See spec(...) for full column specifications.
+"

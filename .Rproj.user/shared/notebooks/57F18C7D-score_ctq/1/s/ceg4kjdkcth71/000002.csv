@@ -1,0 +1,60 @@
+"0","```r
+ctq <-
+  ctq %>% 
+  group_by(ID) %>% 
+  mutate(
+    ctq_emo_abuse = mean(
+      c(
+        ctq_1,
+        ctq_2,
+        ctq_3,
+        ctq_4,
+        ctq_5
+      ), na.rm = TRUE
+    ) * 5,
+    ctq_phys_abuse = mean(
+      c(
+        ctq_6,
+        ctq_7,
+        ctq_8,
+        ctq_9,
+        ctq_10
+      ), na.rm = TRUE
+    ) * 5,
+    ctq_sex_abuse = mean(
+      c(
+        ctq_11,
+        ctq_12,
+        ctq_13,
+        ctq_14,
+        ctq_15
+      ), na.rm = TRUE
+    ) * 5,
+    ctq_emo_neglect = mean(
+      c(
+        ctq_16,
+        ctq_17,
+        ctq_18,
+        ctq_19,
+        ctq_20
+      ), na.rm = TRUE
+    ) * 5,
+    ctq_phys_neglect = mean(
+      c(
+        ctq_21, 
+        ctq_22,
+        ctq_23,
+        ctq_24,
+        ctq_25
+      ), na.rm = TRUE
+    ) * 5,
+    ctq_total = sum(
+      ctq_emo_abuse,
+      ctq_phys_abuse,
+      ctq_sex_abuse,
+      ctq_emo_neglect,
+      ctq_phys_neglect
+    )
+  ) %>% 
+  ungroup()
+```"

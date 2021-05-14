@@ -1,0 +1,23 @@
+"0","```r
+itsea_scored <-
+  itsea %>% 
+  mutate(
+    survey_date = parse_date_time(
+      survey_date, 
+      orders = c(\"mdy HM\")
+    ),
+    baby_dob = parse_date_time(baby_dob, orders = c(\"ymd\", \"mdy\")),
+    baby_age_18mo = (baby_dob %--% survey_date) / months(1)
+  ) %>% 
+  dplyr::select(
+    -baby_dob
+  )
+```"
+"1","Problem with `mutate()` input `survey_date`.
+ℹ  2 failed to parse.
+ℹ Input `survey_date` is `parse_date_time(survey_date, orders = c(\"mdy HM\"))`. 2 failed to parse.
+"
+"0","```r
+write_csv(itsea, \"~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/survey_18month/itsea_scored_20201001.csv\")
+
+```"

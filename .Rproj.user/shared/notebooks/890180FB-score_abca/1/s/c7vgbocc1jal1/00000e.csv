@@ -1,0 +1,8 @@
+"0","a %>% "
+"0","  select("
+"0","    preg_num_types:preg_trim3_num_types"
+"0","  ) %>% "
+"0","  pivot_longer(preg_num_types:preg_trim3_num_types) %>% "
+"0","  ggplot(aes(value)) +"
+"0","  geom_histogram(binwidth = 1) +"
+"0","  facet_wrap(.~name, scales = ""free"")"

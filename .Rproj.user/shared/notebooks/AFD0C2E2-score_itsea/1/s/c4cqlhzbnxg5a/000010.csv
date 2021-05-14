@@ -1,0 +1,6 @@
+"0","```r
+
+itsea %>% 
+  count(itsea_concern) %>% 
+  mutate(prop = n / sum(n))
+```"

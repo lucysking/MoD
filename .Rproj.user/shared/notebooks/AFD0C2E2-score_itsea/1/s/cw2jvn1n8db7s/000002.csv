@@ -1,0 +1,20 @@
+"0","```r
+# empathy
+itsea %>% 
+  dplyr::select(
+    itsea_a22, 
+    itsea_b51, 
+    itsea_b56, 
+    itsea_b57, 
+    itsea_b63, 
+    itsea_b73, 
+    itsea_c4
+  ) %>% 
+  alpha()
+```"
+"1","
+Reliability analysis   
+Call: alpha(x = .)
+
+ 
+"

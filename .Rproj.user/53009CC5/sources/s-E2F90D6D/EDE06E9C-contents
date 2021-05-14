@@ -1,0 +1,167 @@
+---
+title: "score_PCSI"
+author: "Fran Querdasi"
+date: "2/19/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+##VARIABLES TO CALCULATE
+#number of stressful events endorsed (sum)
+##childhood maltreatment - Y or N
+##stress during preg - trimester (1st, 2nd, 3rd, none), number of stressful exp
+##child witnessed parent stress - number, age(s)
+##child direct experience - number, age(s)
+##child direct experience + witness - number, age(s)
+#for each, sum subjective severity
+```
+#Read in data
+```{r}
+#Libraries
+library(tidyverse)
+library(psych)
+
+#Parameters
+
+pcsi_file <- "~/Desktop/mod_scoring_measures/Data/pcsi_20190219.csv"
+#need mom_age_conception, mom_age_babydob, baby_dob
+  #mom_dob is in Mod Area 3: Inflammation REDcap (contact info; "mob_dob")
+  #baby_due_date is in Mod Area 3: Inflammation REDcap (current pregnancy chart review; "initial_edd", "final_edd")
+
+mom_dob_file <- "~/Desktop/mod_scoring_measures/Data/contact_info_20190220.csv"
+baby_due_date_file <- "~/Desktop/mod_scoring_measures/Data/current_pregnancy_20190220.csv"
+
+#Functions
+
+```
+#Read in and clean up data
+```{r}
+pcsi_mod <-
+  read_csv(pcsi_file) %>% 
+  rename(
+    ID = id
+  ) %>% 
+  mutate(
+    ID = as.integer(ID)
+  ) %>% 
+  select(
+    -redcap_event_name,
+    -redcap_survey_identifier
+  ) %>%
+  left_join(
+    read_csv(mom_dob_file) %>% 
+      select(
+        patient_id,
+        mob_dob
+      ) %>% 
+      rename(
+        ID = patient_id,
+        mom_dob = mob_dob
+      ) %>% 
+      mutate(ID = as.integer(ID)
+      ) %>% 
+      left_join(
+        read_csv(baby_due_date_file) %>% 
+          select(
+            patient_id,
+            initial_edd,
+            final_edd
+          ) %>% 
+          rename(
+            ID = patient_id,
+            baby_due_date_initial = initial_edd,
+            baby_due_date_final = final_edd
+          ) %>% 
+          mutate(ID = as.integer(ID))
+      ) 
+    
+    %>% 
+      filter(
+        !is.na(pcsi_timestamp)
+        )
+  )
+
+```
+#Calculate mothers' number of events endorsed (lifetime, pregnancy, childhood)
+```{r}
+##lifetime
+pcsi_mod <-
+  pcsi_mod %>%
+  mutate(
+    mom_num_stress = rowSums(subset(pcsi_mod, select = c(disaster:other1, other2)), na.rm = TRUE)
+  )
+
+##pregnancy
+preg_exp_vars <-
+  pcsi_mod %>% 
+  select(contains("preg")) %>% 
+  names()
+
+pcsi_mod <-
+  pcsi_mod %>% 
+  mutate_at(
+    vars(preg_exp_vars),
+    as.integer
+  ) %>% 
+  mutate(
+    num_stress_preg = rowSums(subset(pcsi_mod, select = preg_exp_vars), na.rm = TRUE)
+  )
+
+##childhood 
+
+```
+
+##LUCY's LSCR SCRIPT HAS - 
+```{r}
+#n lifetime, n preg, frequencies of each type in childhood/adulthood, table for n lifetime, preg, childhood
+preg_exp_vars <- 
+  lscr_preg %>% 
+  select(contains("preg")) %>% 
+  names()
+
+lscr_preg <-
+  lscr_preg %>% 
+  mutate_at(
+    vars(exp_vars),
+    as.integer
+  ) %>% 
+  mutate_at(
+    vars(preg_exp_vars),
+    as.integer
+  ) %>% 
+  mutate(
+    num_stress_total = 
+      pmap_int(
+        select(., exp_vars),
+        function(...) sum(c(...), na.rm = TRUE)
+      ),
+    num_stress_preg = 
+      pmap_int(
+        select(., preg_exp_vars),
+        function(...) sum(c(...), na.rm = TRUE)
+      ),
+    sum_sev = 
+      pmap_dbl(
+        select(., sev_vars),
+        function(...) sum(c(...), na.rm = TRUE)
+      ),
+    max_sev = 
+      pmap_dbl(
+        select(., sev_vars),
+        function(...) max(c(...), na.rm = TRUE)
+      ),
+    pregnancy_stress = 
+      if_else(
+        num_stress_preg > 0,
+        "yes", "no"
+      )
+  )
+
+calc_preg_sev <- function(preg_exp, sev) { #pregnancy
+  case_when(
+    preg_exp == 1 ~ sev,
+    TRUE ~ NA_real_
+  )
+}
+```
+

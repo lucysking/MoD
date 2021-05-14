@@ -1,0 +1,31 @@
+"0","b <-"
+"0","  read_csv(bces_file) %>% "
+"0","  select("
+"0","    -redcap_event_name,"
+"0","    -redcap_survey_identifier,"
+"0","    -bces_complete"
+"0","  ) %>% "
+"0","  filter(!is.na(bces_timestamp))"
+"2","
+[36m──[39m [1m[1mColumn specification[1m[22m [36m──────────────────────────────────────────────────────────[39m
+cols(
+  id = [32mcol_double()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  bces_timestamp = [34mcol_datetime(format = """")[39m,
+  bce_1 = [32mcol_double()[39m,
+  bce_2 = [32mcol_double()[39m,
+  bce_3 = [32mcol_double()[39m,
+  bce_4 = [32mcol_double()[39m,
+  bce_5 = [32mcol_double()[39m,
+  bce_6 = [32mcol_double()[39m,
+  bce_7 = [32mcol_double()[39m,
+  bce_8 = [32mcol_double()[39m,
+  bce_9 = [32mcol_double()[39m,
+  bce_10 = [32mcol_double()[39m,
+  bces_complete = [32mcol_double()[39m
+)
+
+"
+"0","##replace decline to answer (88) and -888 (NA) values with NA"
+"0","b[b == 88] <- NA"

@@ -1,0 +1,108 @@
+---
+title: "Score CESD"
+author: "Lucy King"
+output: html_document
+---
+
+```{r}
+#Libraries
+library(tidyverse)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+cesd_file <- paste0(home, "CESD/raw_data/cesd_raw_data_20210512.csv")
+
+```
+
+# Read in and score data
+```{r}
+c <-
+  read_csv(
+    cesd_file
+  ) %>% 
+  dplyr::select(
+    -redcap_survey_identifier,
+    -cesd_complete
+  ) %>%
+  filter(!is.na(cesd_timestamp))
+
+
+##replace decline to answer (88) and -888 (NA) values with NA
+c[c == 88] <- NA
+```
+
+```{r}
+c <-
+  c %>% 
+  mutate_at(
+    vars(cesd_4, cesd_8, cesd_12, cesd_16),
+    funs(
+      . %>%
+        recode("3" = 0, "2" = 1, "1" = 2, "0" = 3)
+    )
+  )  %>% 
+  group_by(id) %>%
+  mutate(
+    cesd_total = mean(
+      c(
+        cesd_1,
+        cesd_2,
+        cesd_3,
+        cesd_4,
+        cesd_5,
+        cesd_6,
+        cesd_7,
+        cesd_8,
+        cesd_9,
+        cesd_10,
+        cesd_11,
+        cesd_12,
+        cesd_13,
+        cesd_14,
+        cesd_15,
+        cesd_16,
+        cesd_17,
+        cesd_18,
+        cesd_19,
+        cesd_20
+      ),
+      na.rm = TRUE
+    ) * 20
+  ) %>% 
+  ungroup()
+```
+
+
+# Reliability
+```{r}
+c %>% 
+  dplyr::select(
+    cesd_1:cesd_20
+  ) %>% 
+  psych::alpha()
+```
+
+# Distributions and Descriptives
+
+```{r}
+c %>% 
+  summarise_at(
+    vars(cesd_total),
+    funs(mean, sd, min, max), na.rm = TRUE
+  )
+```
+
+```{r}
+c %>% 
+  ggplot(aes(cesd_total)) +
+  geom_histogram()
+```
+
+# Export data 
+```{r}
+write_csv(
+  c,
+  paste0(home, "CESD/cesd_scored_20210512.csv")
+)
+```
+

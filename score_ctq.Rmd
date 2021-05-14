@@ -1,0 +1,274 @@
+---
+title: "Score CTQ"
+author: "Lucy King"
+output: html_notebook
+---
+
+```{r}
+#Libraries
+library(tidyverse)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+ctq_file <- paste0(home, "CTQ/raw_data/ctq_raw_data_20210512.csv")
+```
+
+# Read in data 
+```{r}
+t <-
+  read_csv(ctq_file) %>% 
+  select(
+    -redcap_event_name,
+    -redcap_survey_identifier
+  ) %>% 
+  filter(!is.na(ctq_timestamp))
+
+##replace decline to answer (88) and -888 (NA) values with NA
+t[t == 88] <- NA
+```
+
+# Count missing items
+```{r}
+t <-
+  t %>% 
+  mutate(
+    n_ctq = pmap_dbl(
+      select(., c(ctq_1:ctq_25)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    ),
+    n_emo_abuse = pmap_dbl(
+      select(., c(ctq_1:ctq_5)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    ),
+    n_phy_abuse = pmap_dbl(
+      select(., c(ctq_6:ctq_10)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    ),
+     n_sex_abuse = pmap_dbl(
+      select(., c(ctq_11:ctq_15)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    ),
+    n_emo_neglect = pmap_dbl(
+      select(., c(ctq_16:ctq_20)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    ),
+    n_phys_neglect = pmap_dbl(
+      select(., c(ctq_21:ctq_25)),
+      function(...) sum(!is.na(c(...)), na.rm = TRUE)
+    )
+  )
+
+t %>% 
+  summarize(
+    min_items = min(n_ctq), # minimum number of items completed
+    emoab_min_items = min(n_emo_abuse),
+    phyab_min_items = min(n_phy_abuse),
+    sexab_min_items = min(n_sex_abuse),
+    emoneg_min_items = min(n_emo_neglect),
+    physneg_min_items = min(n_phys_neglect)
+  )
+```
+
+
+# Score 
+
+```{r}
+t <-
+  t %>% 
+  group_by(id) %>% 
+  mutate(
+    ctq_emo_abuse = if_else(
+      n_emo_abuse < 4,
+      NA_real_,
+      mean(
+        c(
+          ctq_1,
+          ctq_2,
+          ctq_3,
+          ctq_4,
+          ctq_5
+        ), na.rm = TRUE
+      )* 5,
+    ),
+    ctq_phys_abuse = if_else(
+      n_phy_abuse < 4,
+      NA_real_,
+      mean(
+        c(
+          ctq_6,
+          ctq_7,
+          ctq_8,
+          ctq_9,
+          ctq_10
+        ), na.rm = TRUE
+      ) * 5
+    ),
+    ctq_sex_abuse = if_else(
+      n_sex_abuse < 4,
+      NA_real_,
+      mean(
+        c(
+          ctq_11,
+          ctq_12,
+          ctq_13,
+          ctq_14,
+          ctq_15
+        ), na.rm = TRUE
+      ) * 5
+    ),
+    ctq_emo_neglect = if_else(
+      n_emo_abuse < 4,
+      NA_real_,
+      mean(
+        c(
+          ctq_16,
+          ctq_17,
+          ctq_18,
+          ctq_19,
+          ctq_20
+        ), na.rm = TRUE
+      ) * 5
+    ),
+    ctq_phys_neglect = if_else(
+      n_phys_neglect < 4,
+      NA_real_,
+      mean(
+        c(
+          ctq_21, 
+          ctq_22,
+          ctq_23,
+          ctq_24,
+          ctq_25
+        ), na.rm = TRUE
+      ) * 5
+    ),
+    ctq_total = if_else(
+      n_ctq < 22,
+      NA_real_,
+      mean(
+        c(
+          ctq_1,
+          ctq_2,
+          ctq_3,
+          ctq_4,
+          ctq_5,
+          ctq_6,
+          ctq_7,
+          ctq_8,
+          ctq_9,
+          ctq_10,
+          ctq_11,
+          ctq_12,
+          ctq_13,
+          ctq_14,
+          ctq_15,
+          ctq_16,
+          ctq_17,
+          ctq_18,
+          ctq_19,
+          ctq_20,
+          ctq_21, 
+          ctq_22,
+          ctq_23,
+          ctq_24,
+          ctq_25
+        ), na.rm = TRUE
+      ) * 25
+    )
+  ) %>% 
+  ungroup()
+```
+
+# Reliability
+
+## Emotional abuse
+```{r}
+t %>% 
+  select(
+    ctq_1,
+    ctq_2,
+    ctq_3,
+    ctq_4,
+    ctq_5
+  ) %>% 
+  psych::alpha()
+```
+## Physical abuse
+```{r}
+t %>% 
+  select(
+    ctq_6,
+    ctq_7,
+    ctq_8,
+    ctq_9,
+    ctq_10
+  ) %>% 
+  psych::alpha()
+```
+## Sexual abuse
+```{r}
+t %>% 
+  select(
+    ctq_11,
+    ctq_12,
+    ctq_13,
+    ctq_14,
+    ctq_15
+  ) %>% 
+  psych::alpha()
+```
+## Emotional neglect
+```{r}
+t %>% 
+  select(
+    ctq_16,
+    ctq_17,
+    ctq_18,
+    ctq_19,
+    ctq_20
+  ) %>% 
+  psych::alpha()
+```
+## Physical neglect
+```{r}
+t %>% 
+  select(
+    ctq_21,
+    ctq_17,
+    ctq_18,
+    ctq_19,
+    ctq_25
+  ) %>% 
+  psych::alpha()
+```
+## Total maltreatment
+```{r}
+t %>% 
+  select(
+    ctq_1:ctq_25
+  ) %>% 
+  psych::alpha()
+```
+
+# Histograms 
+```{r}
+t %>% 
+  select(
+    ctq_emo_abuse:ctq_total
+  ) %>% 
+  gather(key, value) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 5) +
+  facet_wrap(.~key, scales = "free")
+```
+# Export data
+```{r}
+write_csv(
+  t,
+  paste0(home, "CTQ/ctq_scored_20210512.csv")
+)
+```
+
+
+
+

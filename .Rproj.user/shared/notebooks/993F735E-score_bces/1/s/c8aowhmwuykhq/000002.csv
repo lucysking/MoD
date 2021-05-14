@@ -1,0 +1,17 @@
+"0","b %>% 
+  select(
+    bce_1:bce_10
+  ) %>% 
+  psych::alpha()
+"
+"2","Item = bce_2 had no variance and was deleted but still is counted in the score"
+"1","
+Reliability analysis "
+"1"," "
+"1"," 
+"
+"1","Call: "
+"1","psych::alpha(x = .)
+"
+"1","
+ "

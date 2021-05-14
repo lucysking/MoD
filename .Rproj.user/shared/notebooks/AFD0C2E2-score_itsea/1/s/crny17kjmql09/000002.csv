@@ -1,0 +1,27 @@
+"0","```r
+itsea <-
+  read_csv(q_18month_cs_file) %>% 
+  rename(
+    ID = record_id,
+    survey_date = questionnaires_18mo_timestamp
+  ) %>% 
+  mutate(
+    ID = as.integer(ID)
+  ) %>% 
+  dplyr::select(-redcap_event_name:-redcap_survey_identifier) %>% 
+  bind_rows(
+    read_csv(q_18month_long_file) %>% 
+      rename(
+        ID = record_id,
+        survey_date = month_survey_timestamp
+        ) %>% 
+      mutate(ID = as.integer(ID)) %>%
+      dplyr::select(-redcap_event_name:-redcap_survey_identifier) 
+  ) %>% 
+  dplyr::select(ID, survey_date, itsea_a2:itsea_e11) %>% 
+  left_join(
+    read_csv(demographics_file) %>% 
+      dplyr::select(ID, male, baby_dob),
+    by = \"ID\"
+  )
+```"

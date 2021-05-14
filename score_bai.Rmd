@@ -1,0 +1,63 @@
+---
+title: "Score BAI"
+author: "Lucy King"
+date: "5/12/2021"
+output: html_document
+---
+
+```{r}
+#Libraries
+library(tidyverse)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+bai_file <- paste0(home, "BAI/raw_data/bai_raw_data_20210512.csv")
+```
+
+# Read in data 
+```{r}
+b <-
+  read_csv(bai_file) %>% 
+  select(
+    -redcap_event_name,
+    -redcap_survey_identifier,
+    -bai_complete
+  ) %>% 
+  filter(!is.na(bai_timestamp))
+
+##replace decline to answer (88) and -888 (NA) values with NA
+b[b == 88] <- NA
+```
+
+# Score 
+```{r}
+b <-
+  b %>% 
+  mutate(
+    bai_total = pmap_dbl(
+      select(., c(bai_1:bai_21)),
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 21
+  )
+```
+
+# Reliability
+```{r}
+b %>% 
+  select(bai_1:bai_21) %>% 
+  psych::alpha()
+```
+# Histogram
+```{r}
+b %>% 
+  ggplot(aes(bai_total)) +
+  geom_histogram(binwidth = 3)
+```
+# Export data
+```{r}
+write_csv(
+  b,
+  paste0(home, "BAI/bai_scored_20210512.csv")
+)
+```
+

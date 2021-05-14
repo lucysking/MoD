@@ -1,0 +1,51 @@
+"0","d_var_names <-read_csv(demo_values_file)"
+"2","
+[36m──[39m [1m[1mColumn specification[1m[22m [36m──────────────────────────────────────────────────────────[39m
+cols(
+  .default = col_double(),
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  demographics_questionnaire_timestamp = [34mcol_datetime(format = """")[39m,
+  demograph_date = [34mcol_date(format = """")[39m,
+  momrace_describe = [31mcol_character()[39m,
+  educ_describe = [31mcol_character()[39m,
+  employment_explain = [33mcol_logical()[39m,
+  mom_native_lang = [31mcol_character()[39m,
+  primarylang = [31mcol_character()[39m,
+  secondlang_type = [31mcol_character()[39m,
+  marital_status_describe = [33mcol_logical()[39m,
+  partner_educ_describe = [31mcol_character()[39m,
+  partner_employ_describe = [31mcol_character()[39m,
+  ppl_in_home_infants = [31mcol_character()[39m,
+  ppl_in_home_preschool = [31mcol_character()[39m,
+  ppl_in_home_describe = [31mcol_character()[39m,
+  ppl_in_home_adults = [31mcol_character()[39m,
+  ppl_in_home_allchild = [31mcol_character()[39m,
+  child_race_describe = [31mcol_character()[39m,
+  child_grade_describe = [31mcol_character()[39m
+  # ... with 1 more columns
+)
+[36mℹ[39m Use [38;5;235m[48;5;253m[38;5;235m[48;5;253m`spec()`[48;5;253m[38;5;235m[49m[39m for the full column specifications.
+
+"
+"0","d<- read_csv(demo_labels_file)"
+"2","Duplicated column names deduplicated: 'Please explain' => 'Please explain_1' [18], 'Please explain' => 'Please explain_2' [24], 'Please explain' => 'Please explain_3' [26], 'Please explain' => 'Please explain_4' [28], 'Please explain' => 'Please explain_5' [45], 'Please describe' => 'Please describe_1' [60], 'Please explain' => 'Please explain_6' [64]"
+"2","
+[36m──[39m [1m[1mColumn specification[1m[22m [36m──────────────────────────────────────────────────────────[39m
+cols(
+  .default = col_character(),
+  `Record ID` = [32mcol_double()[39m,
+  `Survey Identifier` = [33mcol_logical()[39m,
+  `Survey Timestamp` = [34mcol_date(format = """")[39m,
+  `Please explain_1` = [33mcol_logical()[39m,
+  `Please explain_2` = [33mcol_logical()[39m,
+  `How many children 6 years or older?` = [32mcol_double()[39m,
+  `Counting yourself, how many adults (people aged 18 years or older) live in your house, apartment, or trailer?` = [32mcol_double()[39m,
+  `How many babies, children or teenagers (people aged 17 years or younger) live in your house, apartment, or trailer?` = [32mcol_double()[39m,
+  `How many children do you currently have?` = [32mcol_double()[39m,
+  `How many of your children are your biological children?` = [32mcol_double()[39m
+)
+[36mℹ[39m Use [38;5;235m[48;5;253m[38;5;235m[48;5;253m`spec()`[48;5;253m[38;5;235m[49m[39m for the full column specifications.
+
+"
+"0","names(d) <- names(d_var_names)"

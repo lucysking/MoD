@@ -1,0 +1,16 @@
+"0","```r
+itsea_fa2 <- fa(
+  itsea_subscales, 
+  nfactors = 2, 
+  rotate = \"oblique\"
+  )
+```"
+"1","Specified rotation not found, rotate='none' used
+"
+"0","```r
+itsea_fa2
+```"
+"1","Factor Analysis using method =  minres
+Call: fa(r = itsea_subscales, nfactors = 2, rotate = \"oblique\")
+Standardized loadings (pattern matrix) based upon correlation matrix
+"

@@ -1,0 +1,22 @@
+"0","```r
+itsea <-
+  itsea %>%
+  group_by(ID) %>% 
+  mutate(
+    itsea_symptoms = sum(
+      c(
+        itsea_intern,
+        itsea_extern,
+        itsea_negemo
+        ), na.rm = TRUE
+      ),
+    itsea_competence = sum(
+      c(
+        itsea_play,
+        itsea_empath,
+        itsea_social
+      ), na.rm = TRUE
+    )
+  ) %>% 
+  ungroup() 
+```"

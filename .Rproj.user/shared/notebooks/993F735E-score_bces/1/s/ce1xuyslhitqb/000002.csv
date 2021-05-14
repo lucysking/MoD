@@ -1,0 +1,4 @@
+"0","write_csv("
+"0","  b,"
+"0","  paste0(home, ""BCES/bces_scored_20210512.csv"")"
+"0",")"

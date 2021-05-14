@@ -1,0 +1,295 @@
+---
+title: "Clean demographics data"
+author: "Lucy King"
+date: "5/12/2021"
+output: html_document
+---
+
+# Environment
+```{r}
+library(tidyverse)
+library(lubridate)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+demo_labels_file <- paste0(home, "demographics/raw_data/demo_raw_data_labels_20210512.csv")
+demo_values_file <- paste0(home, "demographics/raw_data/demo_raw_data_values_20210512.csv")
+child_dob_file <- paste0(home, "demographics/raw_data/child_dob_20210512.csv")
+mom_dob_file <- paste0(home, "demographics/raw_data/mom_dob_20210512.csv")
+```
+
+# Read in data 
+```{r}
+d_var_names <-read_csv(demo_values_file)
+d<- read_csv(demo_labels_file)
+names(d) <- names(d_var_names)
+```
+
+# Clean data
+
+## Maternal and child age
+```{r}
+d1 <-
+  d %>% 
+  select(
+    -redcap_event_name,
+    -redcap_survey_identifier,
+    -demograph_date
+  ) %>% 
+  left_join(
+    read_csv(child_dob_file), by = "id"
+  ) %>% 
+  left_join(
+    read_csv(mom_dob_file), by = "id"
+  ) %>% 
+  rename(
+    timestamp = demographics_questionnaire_timestamp,
+    mom_dob = mob_dob
+  ) %>% 
+  filter(!is.na(timestamp)) %>% # remove those who did not complete
+  mutate(
+    timestamp = date(timestamp),
+    mom_dob = date(parse_date_time2(mom_dob, orders = "%m/%d/%y")),
+    child_dob = date(parse_date_time2(child_dob, orders = "%m/%d/%y"))
+  ) %>% 
+  mutate(
+    child_age = (child_dob %--% timestamp) / years(1),
+    mom_age = (mom_dob %--% timestamp) / years(1),
+    child_male = case_when(
+      child_sex == "Male" ~ 1,
+      child_sex == "Female" ~ 0
+    )
+  ) %>% 
+  select(-child_sex)
+
+```
+
+# Race and ethnicity
+
+## Mother
+```{r}
+d2 <-
+  d1 %>% 
+  rename(
+    mom_anative = mom_race___1,
+    mom_asian = mom_race___2,
+    mom_black = mom_race___3,
+    mom_pnative = mom_race___4,
+    mom_white = mom_race___5,
+    mom_other_race = mom_race___99,
+    mom_decline_race = mom_race___88
+  ) %>% 
+  mutate_at(
+    vars(mom_anative:mom_decline_race),
+    funs(
+      . %>% 
+        recode(
+          "Unchecked" = 0,
+          "Checked" = 1
+        )
+    )
+  ) %>% 
+  mutate(
+    mom_latinx = case_when(
+      mom_ethnicity == "Not Hispanic or Latino" ~ 0,
+      mom_ethnicity == "Hispanic or Latino" ~ 1
+    ),
+    mom_poc = if_else(
+      mom_anative == 1 | mom_asian == 1 | mom_black == 1 | mom_pnative == 1 |
+        mom_other_race == 1 & mom_decline_race != 1,
+      1, 0 
+    )
+  ) %>% 
+  select(
+    id, 
+    timestamp,
+    mom_latinx,
+    mom_poc,
+    everything(),
+    -mom_ethnicity
+  )
+```
+
+## Child
+```{r}
+d3 <- 
+  d2 %>% 
+  rename(
+    child_anative = child_race___1,
+    child_asian = child_race___2,
+    child_black = child_race___3,
+    child_pnative = child_race___4,
+    child_white = child_race___5,
+    child_other_race = child_race___99,
+    child_decline_race = child_race___88
+  ) %>% 
+  mutate_at(
+    vars(child_anative:child_decline_race),
+    funs(
+      . %>% 
+        recode(
+          "Unchecked" = 0,
+          "Checked" = 1
+        )
+    )
+  ) %>% 
+  mutate(
+    child_latinx = case_when(
+      child_ethnicity == "Not Hispanic or Latino" ~ 0,
+      child_ethnicity == "Hispanic or Latino" ~ 1
+    ),
+    child_poc = if_else(
+      child_anative == 1 | child_asian == 1 | child_black == 1 | child_pnative == 1 |
+        child_other_race == 1 & child_decline_race != 1,
+      1, 0 
+    )
+  ) 
+```
+
+## People in home, child school, child care
+```{r}
+d4 <-
+  d3 %>% 
+  rename(
+    inhome_partner = ppl_in_home___1,
+    inhome_infant = ppl_in_home___2,
+    inhome_youngchild = ppl_in_home___3,
+    inhome_olderchild = ppl_in_home___4,
+    inhome_grandmother = ppl_in_home___5,
+    inhome_grandfather = ppl_in_home___6,
+    inhome_inlaws = ppl_in_home___7,
+    inhome_friend = ppl_in_home___8,
+    inhome_otherfam = ppl_in_home___9,
+    inhome_alone = ppl_in_home___10,
+    inhome_other = ppl_in_home___11,
+    inhome_decline = ppl_in_home___88
+  ) %>% 
+  mutate(
+    child_daycare = case_when(
+      child_daycare == "Yes" ~ 1,
+      child_school == "No" ~ 0
+    ),
+    child_school = case_when(
+      child_school == "Yes" ~ 1,
+      child_school == "No" ~ 0
+    ),
+    child_primary = case_when( # primary caregiver
+      child_primary == "Yes" ~ 1,
+      child_primary == "No" ~ 0
+    )
+  ) 
+
+```
+
+# Income-to-needs ratio 
+```{r}
+d4 %>% 
+  count(ppl_in_home_allchild)
+
+d4 %>% 
+  count(ppl_in_home_adults)
+
+d4 %>% 
+  count(annual_income)
+```
+
+```{r}
+d5 <- 
+  d4 %>% 
+  group_by(id) %>% 
+  mutate(
+   # calculate the total number of people in participant's household
+    ppl_in_home_total = sum(
+      c(ppl_in_home_adults, ppl_in_home_allchild),
+      na.rm = TRUE
+    ),
+    # create a numeric version of income based on midpoint of bins
+    income_numeric = case_when(
+      annual_income == "Decline to answer" ~ NA_real_,
+      annual_income == "No income" ~ 0,
+      annual_income == "$10,000 or less" ~ 10000,
+      annual_income == "$10,001 - $30,000" ~ 20000,
+      annual_income == "$30,001 - $50,000" ~ 40000,
+      annual_income == "$50,001 - $60,000" ~ 55000,
+      annual_income == "$60,001 - $80,000" ~ 70000,
+      annual_income == "$80,001- $100,000" ~ 90000,
+      annual_income == "$100,001 - $150,000" ~ 125000,
+      annual_income == "$150,001 - $200,000" ~ 175000,
+      annual_income == "$200,001 - $250,000" ~ 225000,
+      annual_income == "$250,001 or more" ~ 250000,
+    ),
+    # inr based on the federal poverty thresholds for number of people in household and number that are children
+    fpl_threshold = case_when(
+      ppl_in_home_total == 1 & ppl_in_home_allchild == 0 ~ 13300,
+      ppl_in_home_total == 2 & ppl_in_home_allchild == 0 ~ 17120,
+      ppl_in_home_total == 2 & ppl_in_home_allchild == 1 ~ 17622,
+      ppl_in_home_total == 3 & ppl_in_home_allchild == 0 ~ 19998,
+      ppl_in_home_total == 3 & ppl_in_home_allchild == 1 ~ 20578,
+      ppl_in_home_total == 3 & ppl_in_home_allchild == 2 ~ 20598,
+      ppl_in_home_total == 4 & ppl_in_home_allchild == 0 ~ 26370,
+      ppl_in_home_total == 4 & ppl_in_home_allchild == 1 ~ 26801,
+      ppl_in_home_total == 4 & ppl_in_home_allchild == 2 ~ 25926,
+      ppl_in_home_total == 4 & ppl_in_home_allchild == 3 ~ 26017,
+      ppl_in_home_total == 5 & ppl_in_home_allchild == 0 ~ 31800,
+      ppl_in_home_total == 5 & ppl_in_home_allchild == 1 ~ 32263,
+      ppl_in_home_total == 5 & ppl_in_home_allchild == 2 ~ 31275,
+      ppl_in_home_total == 5 & ppl_in_home_allchild == 3 ~ 30510,
+      ppl_in_home_total == 5 & ppl_in_home_allchild == 4 ~ 30044,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 0 ~ 36576,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 1 ~ 36721,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 2 ~ 35965,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 3 ~ 35239,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 4 ~ 34161,
+      ppl_in_home_total == 6 & ppl_in_home_allchild == 5 ~ 33522,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 0 ~ 42085,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 1 ~ 42348,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 2 ~ 41442,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 3 ~ 40811,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 4 ~ 39635,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 5 ~ 38262,
+      ppl_in_home_total == 7 & ppl_in_home_allchild == 6 ~ 36757,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 0 ~ 47069,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 1 ~ 47485,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 2 ~ 46630,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 3 ~ 45881,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 4 ~ 44818,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 5 ~ 43470,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 6 ~ 42066,
+      ppl_in_home_total == 8 & ppl_in_home_allchild == 7 ~ 41709,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 0 ~ 56621,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 1 ~ 56895,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 2 ~ 56139,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 3 ~ 55503,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 4 ~ 54460,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 5 ~ 53025,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 6 ~ 51727,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild == 7 ~ 51406,
+      ppl_in_home_total >= 9 & ppl_in_home_allchild >= 8 ~ 49426
+    ),
+    inr_fpl = income_numeric / fpl_threshold
+  ) %>% 
+  ungroup() 
+```
+
+```{r}
+d5 %>% 
+  ggplot(aes(inr_fpl)) +
+  geom_histogram(binwidth = 1)
+
+d5 %>% 
+  count(inr_fpl < 1) %>% 
+  mutate(per = n / sum(n))
+
+d5 %>% 
+  count(inr_fpl < 2) %>% 
+  mutate(per = n / sum(n))
+```
+# Export data
+```{r}
+write_csv(
+  d5,
+  paste0(home, "demographics/demo_cleaned_20210512.csv")
+)
+```
+
+

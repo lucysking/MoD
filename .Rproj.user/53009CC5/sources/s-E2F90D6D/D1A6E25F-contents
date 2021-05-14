@@ -1,0 +1,65 @@
+---
+title: "Score BCES"
+author: "Lucy King"
+date: "5/12/2021"
+output: html_document
+---
+
+```{r}
+#Libraries
+library(tidyverse)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
+
+bces_file <- paste0(home, "BCES/raw_data/bces_raw_data_20210512.csv")
+```
+
+# Read in data
+```{r}
+b <-
+  read_csv(bces_file) %>% 
+  select(
+    -redcap_event_name,
+    -redcap_survey_identifier,
+    -bces_complete
+  ) %>% 
+  filter(!is.na(bces_timestamp))
+
+##replace decline to answer (88) and -888 (NA) values with NA
+b[b == 88] <- NA
+```
+
+# Score
+```{r}
+b <-
+  b %>% 
+  mutate(
+    bces_total = pmap_dbl(
+      select(., bce_1:bce_10),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+# Reliability
+```{r}
+b %>% 
+  select(
+    bce_1:bce_10
+  ) %>% 
+  psych::alpha()
+```
+# Histogram
+```{r}
+b %>% 
+  ggplot(aes(bces_total)) +
+  geom_histogram(binwidth = 1)
+```
+# Export data
+```{r}
+write_csv(
+  b,
+  paste0(home, "BCES/bces_scored_20210512.csv")
+)
+```
+

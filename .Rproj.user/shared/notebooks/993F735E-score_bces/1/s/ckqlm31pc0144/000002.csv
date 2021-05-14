@@ -1,0 +1,8 @@
+"0","b <-"
+"0","  b %>% "
+"0","  mutate("
+"0","    bces_total = pmap_dbl("
+"0","      select(., bce_1:bce_10),"
+"0","      function(...) sum(c(...), na.rm = TRUE)"
+"0","    )"
+"0","  )"

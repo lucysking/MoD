@@ -1,0 +1,7 @@
+"0","parent_sev_ratings <- "
+"0","  a %>% "
+"0","  select(contains(""_sev"")) %>% "
+"0","  select(-contains(""_sev_wit"")) %>% "
+"0","  select(-contains(""_sev_dir"")) %>% "
+"0","  select(-ill_child_sev) %>% "
+"0","  names()"

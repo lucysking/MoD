@@ -1,0 +1,24 @@
+"0","dc <-
+  d %>% 
+  select(
+    id = AssessedPersonId,
+    date = DateOnForm,
+    ends_with(""_Total""),
+    c15_prob_1:c15_prob_99,
+    -Language_Development_Survey_Total:-Vocabulary_Score_for_30_35_months_Total
+  ) %>% 
+  rename_all(
+    funs(str_to_lower(.))
+  )
+"
+"2","`funs()` was deprecated in dplyr 0.8.0.
+Please use a list of either functions or lambdas: 
+
+  # Simple named list: 
+  list(mean = mean, median = median)
+
+  # Auto named with `tibble::lst()`: 
+  tibble::lst(mean, median)
+
+  # Using lambdas
+  list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))"

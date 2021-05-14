@@ -1,0 +1,47 @@
+---
+title: "Score SDQ"
+author: "Lucy King"
+date: "4/23/2021"
+output: html_document
+---
+
+# Environment
+```{r}
+library(tidyverse)
+
+sdq_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/SDQ/raw_data/sdq_raw_data_20210322.csv"
+
+
+```
+
+# Read in data
+```{r}
+s <-
+  read_csv(sdq_file) %>% 
+  select(
+    id, 
+    sdq_1:sdq_5
+  )
+
+##replace decline to answer (88) with NA
+s[s == 88] <- NA
+```
+
+# Score
+```{r}
+s <-
+  s %>% 
+  group_by(id) %>% 
+  mutate(
+    sdq_total = mean(
+      c(sdq_1, sdq_2, sdq_3, sdq_4, sdq_5),
+      na.rm = TRUE
+    ) * 5
+  )
+```
+
+# Export
+```{r}
+write_csv(s, "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/SDQ/sdq_scored_20210423.csv")
+```
+

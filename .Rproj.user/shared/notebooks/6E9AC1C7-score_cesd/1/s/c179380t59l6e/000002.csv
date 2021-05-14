@@ -1,0 +1,5 @@
+"0","c %>% "
+"0","  summarise_at("
+"0","    vars(cesd_total),"
+"0","    funs(mean, sd, min, max), na.rm = TRUE"
+"0","  )"

@@ -1,0 +1,445 @@
+---
+title: "Score affect"
+output: html_notebook
+---
+
+# Copy files on Oak to Desktop
+```{r}
+file_origin <- 
+  dir(
+    path = "/Volumes/group/active/MoD/Behavioral_Videos",
+    pattern = "^\\d{5}_\\d{8}$",
+    full.names = TRUE
+  )
+
+file_destination <- "~/Desktop/MoD/data/coding_files/"
+
+files <-
+  list.files(
+    path = file_origin,
+    pattern = "^\\d{5}_FilebyFrame_USE.csv$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+file.copy(files, file_destination)
+```
+
+# Environment set up
+```{r}
+#Libraries
+library(tidyverse)
+library(psych)
+
+#Files
+affect_files  <-
+  tibble(
+    path = 
+      list.files(
+        path = file_destination,
+        pattern = "^\\d{5}_FilebyFrame_USE.csv$",
+        full.names = TRUE
+      )
+  )
+
+```
+
+# Read in data
+```{r, warning=FALSE}
+affect_data <-
+  affect_files %>% 
+  mutate(
+    data = map(path, ~read_csv(., col_types = cols(.default = "c")))
+  ) %>% 
+  unnest(data) %>% 
+  mutate(
+    ID = str_extract(path, "\\d{5}")
+  ) %>% 
+  select(
+    ID,
+    episode = episode.code01,
+    episode.onset,
+    episode.offset,
+    phase = episode_section.code01,
+    phase.onset = episode_section.onset,
+    phase.offset = episode_section.offset,
+    arousal.onset,
+    arousal.offset,
+    arousal = arousal.code01,
+    valence.onset,
+    valence.offset,
+    valence = valence.code01,
+    valence_r.onset,
+    valence_r.offset,
+    valence_r = valence_r.code01,
+    arousal_r.onset,
+    arousal_r.offset,
+    arousal_r = arousal_r.code01,
+    -path
+  ) %>% 
+  mutate(
+    phase = str_replace(phase, "^\\w+_", ""),
+    phase = str_replace(phase, "^\\w+\\r_", ""),
+    phase = str_replace(phase, "^\\w+\\r\\r_", "")
+  ) %>% 
+  mutate_at(
+    vars(ID, ends_with("set"), ends_with("_r"), valence, arousal),
+    as.double
+  )
+```
+
+# Score valence
+
+## Steps below:
+###1. Calculate duration (in seconds) of each phase.
+###2. Calculate duration of the code (e.g., "neutral").
+###3. Calculate the proportion of the phase in which the code was active (e.g., .50 of the phase was coded as neutral).
+
+```{r}
+valence_data <-
+  affect_data %>% 
+  filter(!is.na(episode), !is.na(phase), !is.na(valence)) %>% 
+  select(
+    ID,
+    episode,
+    phase,
+    phase.onset,
+    phase.offset,
+    valence.onset,
+    valence.offset,
+    valence
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  mutate(
+    phase_dur = (phase.offset - phase.onset) / 1000,
+    valence_dur = (valence.offset - valence.onset) / 1000,
+    valence_prop = valence_dur / phase_dur
+  ) %>% 
+  ungroup() %>% 
+  distinct(ID, episode, phase, valence_dur, valence, valence_prop) %>% 
+  group_by(ID, episode, phase, valence) %>% 
+  summarise(
+    prop = mean(valence_prop, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+```
+
+### 4. Create a weighted sum by multiplying valence code by proportion
+```{r}
+valence_data <-
+  valence_data %>% 
+  filter(valence != 999) %>% 
+  mutate(
+    valence_product = prop * valence
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  summarise(
+    valence = sum(valence_product, na.rm = TRUE)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    episode = fct_relevel(
+      episode,
+      "PC", "NSL", "B", "SM"
+    ),
+    phase = fct_relevel(
+      phase,
+      "Baseline", "Stressor", "Recovery"
+    )
+  )
+```
+
+# Visualize valence data
+```{r}
+valence_data %>% 
+  group_by(episode, phase) %>% 
+  summarise(
+    n = n(),
+    mean = mean(valence, na.rm = TRUE),
+    sd = sd(valence, na.rm = TRUE),
+    se = sd / sqrt(n),
+    min = mean - se,
+    max = mean + se
+  ) %>% 
+  ggplot(aes(episode, mean, fill = phase)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
+  labs(
+    y = "Mean valence"
+  )
+
+valence_data %>% 
+  filter(episode != "B") %>% 
+  group_by(episode, phase) %>% 
+  summarise(
+    n = n(),
+    mean = mean(valence, na.rm = TRUE),
+    sd = sd(valence, na.rm = TRUE),
+    se = sd / sqrt(n),
+    min = mean - se,
+    max = mean + se
+  ) %>% 
+  ggplot(aes(episode, mean, fill = phase)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
+  labs(
+    y = "Mean valence"
+  )
+
+valence_data %>% 
+  ggplot(aes(episode, valence, fill = phase)) +
+  geom_boxplot()
+
+valence_data %>% 
+  ggplot(aes(valence, fill = phase)) +
+  geom_density(alpha = 1/2) +
+  facet_wrap(.~episode, scale = "free")
+
+valence_data %>% 
+  filter(episode != "B") %>% 
+  mutate(
+    episode = factor(
+      episode,
+      levels = c("PC", "NSL", "SM"),
+      labels = c("Frustration", "Sadness", "Fear")
+    )
+  ) %>% 
+  group_by(episode, phase) %>% 
+  summarise(
+    n = n(),
+    mean = mean(valence, na.rm = TRUE),
+    sd = sd(valence, na.rm = TRUE),
+    se = sd / sqrt(n),
+    min = mean - se,
+    max = mean + se
+  ) %>% 
+  ggplot(aes(episode, mean, fill = phase)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
+  labs(
+    y = "Mean valence"
+  )
+```
+
+## Calculate reliability for valence
+```{r}
+valence_data_r <-
+  affect_data %>% 
+  filter(!is.na(episode), !is.na(phase), !is.na(valence_r), valence_r != 999) %>% 
+  select(
+    ID,
+    episode,
+    phase,
+    phase.onset,
+    phase.offset,
+    valence_r.onset,
+    valence_r.offset,
+    valence_r
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  mutate(
+    phase_dur = (phase.offset - phase.onset) / 1000,
+    valence_r_dur = (valence_r.offset - valence_r.onset) / 1000,
+    valence_r_prop = valence_r_dur / phase_dur
+  ) %>% 
+  ungroup() %>% 
+  distinct(ID, episode, phase, valence_r_dur, valence_r, valence_r_prop) %>% 
+  group_by(ID, episode, phase, valence_r) %>% 
+  summarise(
+    prop_r = mean(valence_r_prop, na.rm = TRUE)
+  ) %>% 
+  mutate(
+    valence_r_product = prop_r * valence_r
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  summarise(
+    valence_r = sum(valence_r_product, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+valence_data_r <-
+  valence_data_r %>% 
+  select(ID:phase, valence_r) %>% 
+  left_join(
+    valence_data %>% 
+      select(ID:phase, valence),
+    by = c("ID", "episode", "phase")
+  ) %>% 
+  mutate(
+    diff = valence - valence_r,
+    valence_f = as.factor(
+      case_when(
+        valence == 0 ~ "neutral",
+        valence > 0 ~ "positive",
+        valence < 0 ~ "negative"
+      )
+    ),
+    valence_r_f = as.factor(
+      case_when(
+        valence_r == 0 ~ "neutral",
+        valence_r > 0 ~ "positive",
+        valence_r < 0 ~ "negative"
+      )
+    )
+  )
+
+valence_data_r %>% 
+  select(valence, valence_r) %>% 
+  ICC()
+
+valence_data_r %>% 
+  select(valence_f, valence_r_f) %>% 
+  na.omit %>%
+  table() %>% 
+  cohen.kappa()
+```
+
+
+# Score arousal
+
+```{r}
+arousal_data <-
+  affect_data %>% 
+  filter(!is.na(episode), !is.na(phase), !is.na(arousal)) %>% 
+  select(
+    ID,
+    episode,
+    phase,
+    phase.onset,
+    phase.offset,
+    arousal.onset,
+    arousal.offset,
+    arousal
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  mutate(
+    phase_dur = (phase.offset - phase.onset) / 1000,
+    arousal_dur = (arousal.offset - arousal.onset) / 1000,
+    arousal_prop = arousal_dur / phase_dur
+  ) %>% 
+  ungroup() %>% 
+  distinct(ID, episode, phase, arousal_dur, arousal, arousal_prop) %>% 
+  group_by(ID, episode, phase, arousal) %>% 
+  summarise(
+    prop = mean(arousal_prop, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+arousal_data <-
+  arousal_data %>% 
+  filter(arousal != 999) %>% 
+  mutate(
+    arousal_product = prop * arousal
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  summarise(
+    arousal = sum(arousal_product, na.rm = TRUE)
+  )
+```
+
+# Visualize arousal data
+```{r}
+arousal_data %>% 
+  group_by(episode, phase) %>% 
+  summarise(
+    n = n(),
+    mean = mean(arousal, na.rm = TRUE),
+    sd = sd(arousal, na.rm = TRUE),
+    se = sd / sqrt(n),
+    min = mean - se,
+    max = mean + se
+  ) %>% 
+  ggplot(aes(episode, mean, fill = phase)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
+  labs(
+    y = "Mean arousal"
+  )
+
+arousal_data %>% 
+  ggplot(aes(episode, arousal, fill = phase)) +
+  geom_boxplot()
+```
+
+## Calculate reliability for arousal
+```{r}
+arousal_data_r <-
+  affect_data %>% 
+  filter(!is.na(episode), !is.na(phase), !is.na(arousal_r), arousal_r != 999) %>% 
+  select(
+    ID,
+    episode,
+    phase,
+    phase.onset,
+    phase.offset,
+    arousal_r.onset,
+    arousal_r.offset,
+    arousal_r
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  mutate(
+    phase_dur = (phase.offset - phase.onset) / 1000,
+    arousal_r_dur = (arousal_r.offset - arousal_r.onset) / 1000,
+    arousal_r_prop = arousal_r_dur / phase_dur
+  ) %>% 
+  ungroup() %>% 
+  distinct(ID, episode, phase, arousal_r_dur, arousal_r, arousal_r_prop) %>% 
+  group_by(ID, episode, phase, arousal_r) %>% 
+  summarise(
+    prop_r = mean(arousal_r_prop, na.rm = TRUE)
+  ) %>% 
+  mutate(
+    arousal_r_product = prop_r * arousal_r
+  ) %>% 
+  group_by(ID, episode, phase) %>% 
+  summarise(
+    arousal_r = sum(arousal_r_product, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+arousal_data_r <-
+  arousal_data_r %>% 
+  select(ID:phase, arousal_r) %>% 
+  left_join(
+    arousal_data %>% 
+      select(ID:phase, arousal),
+    by = c("ID", "episode", "phase")
+  ) %>% 
+  mutate(
+    diff = arousal - arousal_r,
+    arousal_f = as.factor(
+      case_when(
+        arousal == 0 ~ "neutral",
+        arousal > 0 ~ "positive",
+        arousal < 0 ~ "negative"
+      )
+    ),
+    arousal_r_f = as.factor(
+      case_when(
+        arousal_r == 0 ~ "neutral",
+        arousal_r > 0 ~ "positive",
+        arousal_r < 0 ~ "negative"
+      )
+    )
+  )
+
+arousal_data_r %>% 
+  select(arousal, arousal_r) %>% 
+  ICC()
+
+arousal_data_r %>% 
+  select(arousal_f, arousal_r_f) %>% 
+  na.omit %>%
+  table() %>% 
+  cohen.kappa()
+
+arousal_data_r %>% 
+  count(diff < 0)
+```
+  

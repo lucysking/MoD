@@ -1,0 +1,84 @@
+"0","```r
+factor_names = c(
+  \"Factor 1:\nSymptoms\", 
+  \"Factor 2:\nCompetence\"
+  )
+
+loadings <-
+  itsea_fa2$loadings[] %>% 
+  data.frame() %>% 
+  rownames_to_column(\"measure\") %>% 
+  gather(factor, loading, -measure) %>%  
+  mutate(factor = as.character(factor(factor, labels = factor_names))) 
+  
+# get fa.sort() order
+order <- 
+  loadings %>%
+  group_by(measure) %>%
+  top_n(1, abs(loading)) %>%
+  ungroup() %>%
+  arrange(desc(factor), abs(loading)) %>%
+  mutate(order = 1:length(levels(factor(loadings$measure)))) %>%
+  dplyr::select(measure, order)
+  
+# get percent shared variance explained
+shared_var <- itsea_fa2$Vaccounted %>%
+  data.frame() %>%
+  rownames_to_column(\"stat\") %>%
+  filter(stat == \"Proportion Var\") %>%
+  dplyr::select(-stat) %>%
+  gather(factor, var) %>%
+  mutate(factor = as.character(factor(factor, labels = factor_names))) %>%
+  mutate(var = paste0(factor, \"\n(\", round(var, 2)*100, \"% var.)\"))
+
+  # make plot
+loadings_plot_data <- 
+  loadings %>% 
+  left_join(order, by = \"measure\") %>%
+  left_join(shared_var, by = \"factor\")
+
+loadings_plot_data %>% 
+  mutate(
+    measure = fct_recode(
+      measure,
+      Activity = \"itsea_activity\", 
+      Aggression = \"itsea_agress\", 
+      Depression = \"itsea_depp\", 
+      Anxiety = \"itsea_gad\", 
+      Play = \"itsea_play\",
+      Empathy = \"itsea_empath\",
+      `Negative emotionality` = \"itsea_negemo\",
+      `Social relatedness` = \"itsea_social\"
+    )
+  ) %>% 
+  ggplot(
+    aes(
+      x = var, 
+      y = reorder(measure, order), 
+      fill = loading,
+      label = round(loading, 2)
+    )
+  ) +
+  geom_tile(color = \"black\") +
+  geom_text(size = 6, color = \"black\") +
+  scale_fill_distiller(
+    limits = c(-1, 1), 
+    palette = \"RdYlBu\",
+    guide = guide_colorbar(barheight = 20)
+  ) +
+  scale_x_discrete(position = \"top\") +
+  theme_minimal() +
+  theme(
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14),
+    axis.title = element_blank(), 
+    axis.text.y = element_text(size = 18),
+    axis.text.x = element_text(size = 17)
+  )
+
+ggsave(
+  \"~/Box/lucy_king_files/BABIES/lena_symptoms/manuscript/dev_science/plots/itsea_EFA.png\"
+  )
+```"
+"1","Saving 6.36 x 3.93 in image
+"

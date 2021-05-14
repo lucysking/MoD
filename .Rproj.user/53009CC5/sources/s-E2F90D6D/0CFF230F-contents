@@ -1,0 +1,43 @@
+---
+title: "Clean and visualize preschool CBCL"
+author: "Lucy King"
+date: "4/23/2021"
+output: html_document
+---
+
+# Environment
+```{r}
+library(tidyverse)
+
+cbcl_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBCL/preschool/ASEBA_Raw_And_Scored_Data_Combined_20210325.xlsx"
+```
+
+# Read in data
+```{r}
+d <-
+  readxl::read_xlsx(cbcl_file)
+```
+
+# Clean up file 
+- Remove PHI, demographics
+- Remove percentiles and T scores (we will use raw)
+```{r}
+dc <-
+  d %>% 
+  select(
+    id = AssessedPersonId,
+    date = DateOnForm,
+    ends_with("_Total"),
+    c15_prob_1:c15_prob_99,
+    -Language_Development_Survey_Total:-Vocabulary_Score_for_30_35_months_Total
+  ) %>% 
+  rename_all(
+    list(~str_to_lower(.))
+  )
+```
+
+# Export
+```{r}
+write_csv(dc, "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBCL/preschool/cbcl_preschool_cleaned_20210423.csv")
+```
+

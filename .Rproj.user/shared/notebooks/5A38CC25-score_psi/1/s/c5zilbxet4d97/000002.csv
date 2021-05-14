@@ -1,0 +1,27 @@
+"0","```r
+```r
+psi <-
+  psi %>% 
+  mutate(
+    psi_pd = pmap_dbl(
+      select(., c(psi_1:psi_12)), #parental distress
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_cdi = pmap_dbl(
+      select(., c(psi_13:psi_24)),  #parent-child dysfunctional interaction
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_dc = pmap_dbl(
+      select(., c(psi_25:psi_36)),  #difficult child
+      function(...) mean(c(...), na.rm = TRUE)
+    ) * 12,
+    psi_total = pmap_dbl(
+      select(., c(psi_pd, psi_cdi, psi_dc)),  #total
+      function(...) sum(c(...), na.rm = TRUE)
+    ) 
+  )
+```
+```"
+"1","Error: `c(psi_pd, psi_cdi, psi_dc)` must evaluate to column positions or names, not a double vector
+[90mCall `rlang::last_error()` to see a backtrace[39m
+"

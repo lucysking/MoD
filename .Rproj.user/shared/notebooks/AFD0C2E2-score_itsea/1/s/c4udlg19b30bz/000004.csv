@@ -1,0 +1,22 @@
+"0","```r
+
+itsea %>% 
+  dplyr::select(
+    Activity = itsea_activity,
+    Aggression = itsea_agress,
+    Depression = itsea_depp,
+    Anxiety = itsea_gad,
+    `Negative emotion` = itsea_negemo
+  ) %>% 
+  gather(itsea_subscale, score, Activity:`Negative emotion`) %>% 
+  ggplot(aes(score)) +
+  geom_histogram(bins = 12) +
+  theme_lena +
+  theme(
+    strip.text = element_text(size = 16)
+  ) +
+  facet_wrap(.~itsea_subscale, scales = \"free\") +
+  labs(
+    x = \"Subscale score\"
+  )
+```"

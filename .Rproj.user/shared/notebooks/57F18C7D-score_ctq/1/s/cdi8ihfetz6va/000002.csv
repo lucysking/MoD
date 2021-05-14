@@ -1,0 +1,15 @@
+"0","```r
+ctq <-
+  ctq %>% 
+  mutate(
+    ctq_emo_abuse_win = winsorize(ctq_emo_abuse, product = 3),
+    ctq_phys_abuse_win = winsorize(ctq_phys_abuse, product = 3),
+    ctq_sex_abuse_win = winsorize(ctq_sex_abuse, product = 3),
+    ctq_emo_neglect_win = winsorize(ctq_emo_neglect, product = 3),
+    ctq_phys_abuse_win = winsorize(ctq_phys_abuse, product = 3),
+    ctq_total_win = winsorize(ctq_total, product = 3)
+  )
+ctq %>% 
+  select(ctq_emo_abuse, ctq_emo_abuse_win) %>% 
+  arrange(desc(ctq_emo_abuse_win))
+```"

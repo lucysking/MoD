@@ -1,0 +1,6 @@
+"0","# Libraries"
+"0","library(tidyverse)"
+"0",""
+"0","home <- ""~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"""
+"0",""
+"0","psi_file <- paste0(home, ""PSI/raw_data/psi_raw_data_20210512.csv"")"

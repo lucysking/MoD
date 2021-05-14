@@ -1,0 +1,8 @@
+"0","a %>% "
+"0","  select("
+"0","    sum_sev_preg:sum_sev_trim3"
+"0","  ) %>% "
+"0","  pivot_longer(sum_sev_preg:sum_sev_trim3) %>% "
+"0","  ggplot(aes(value)) +"
+"0","  geom_histogram(binwidth = 1) +"
+"0","  facet_wrap(.~name, scales = ""free"")"

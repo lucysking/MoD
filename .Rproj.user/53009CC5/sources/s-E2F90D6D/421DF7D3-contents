@@ -1,0 +1,127 @@
+---
+title: "Clean SEP"
+author: "Lucy King"
+date: "2/25/2020"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(corrr)
+
+data_home <- "~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/"
+sep_cs_file <- paste0(data_home, "SEP/raw_data/sep_cs_complete.csv")
+sep_lg_file <- paste0(data_home, "SEP/raw_data/sep_lg_complete.csv")
+```
+
+```{r}
+sep_lf <-
+  read_csv(sep_lg_file) %>% 
+  rename(
+    ID = record_id
+  ) %>% 
+  mutate(ID = as.numeric(ID)) %>% 
+  bind_rows(
+    read_csv(sep_cs_file) %>% 
+      rename(ID = record_id) %>% 
+      mutate(ID = as.numeric(ID))
+  ) %>% 
+  rename(
+    timepoint = redcap_event_name,
+    commstatus_ladder = commstatus_ladder_instruc2
+    ) %>% 
+  mutate(
+    timepoint = if_else(
+      timepoint == "questionnaires_6mo_arm_1",
+      "sixmonth_arm_1", timepoint
+    ),
+    timepoint = str_remove(timepoint, "_arm_1")
+  ) %>% 
+  filter(sep_complete == 2) %>% 
+  select(-redcap_survey_identifier, -sep_timestamp, -sep_complete)
+```
+
+```{r}
+sep_wf <-
+  sep_lf %>% 
+  gather(key, variable, usstatus_ladder, commstatus_ladder) %>% 
+  unite(new, timepoint, key) %>% 
+  spread(new, variable)
+
+glimpse(sep_wf)
+```
+
+# Visualize
+```{r}
+sep_lf %>% 
+  ggplot(aes(timepoint, usstatus_ladder)) +
+  geom_line(
+    aes(
+      timepoint, 
+      usstatus_ladder, 
+      group = ID
+    ),
+    color = "blue",
+    alpha = 1/4
+  ) +
+  theme(
+    legend.position = "none"
+  )
+
+sep_lf %>% 
+  ggplot(aes(timepoint, commstatus_ladder)) +
+  geom_line(
+    aes(
+      timepoint, 
+      commstatus_ladder, 
+      group = ID
+    ),
+    color = "red",
+    alpha = 1/4
+  ) +
+  theme(
+    legend.position = "none"
+  )
+```
+
+```{r}
+sep_lf %>% 
+  ggplot(aes(timepoint, usstatus_ladder)) +
+  geom_boxplot()
+
+sep_lf %>% 
+  ggplot(aes(timepoint, commstatus_ladder)) +
+  geom_boxplot()
+```
+
+```{r}
+sep_lf %>% 
+  ggplot(aes(usstatus_ladder)) +
+  geom_histogram() +
+  facet_wrap(~timepoint)
+
+sep_lf %>% 
+  ggplot(aes(commstatus_ladder)) +
+  geom_histogram() +
+  facet_wrap(~timepoint)
+```
+
+# Correlations
+```{r}
+sep_wf %>% 
+  select(
+    neonatal_commstatus_ladder,
+    neonatal_usstatus_ladder,
+    pregnancy_commstatus_ladder,
+    pregnancy_usstatus_ladder,
+    sixmonth_commstatus_ladder,
+    sixmonth_usstatus_ladder
+  ) %>% 
+  correlate()
+```
+
+```{r}
+write_csv(sep_lf, "~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/SEP/sep_cleaned_lf.csv")
+write_csv(sep_wf, "~/Box/Mooddata_Coordinating/BABIES/Data/final_scored_data/SEP/sep_cleaned_wf.csv")
+```
+

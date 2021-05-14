@@ -1,0 +1,14 @@
+"0","b %>% 
+  select(bai_1:bai_21) %>% 
+  psych::alpha()
+"
+"1","
+Reliability analysis "
+"1"," "
+"1"," 
+"
+"1","Call: "
+"1","psych::alpha(x = .)
+"
+"1","
+ "

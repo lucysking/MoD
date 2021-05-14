@@ -1,0 +1,24 @@
+"0","s <-"
+"0","  read_csv(sdq_file) %>% "
+"0","  select("
+"0","    id, "
+"0","    sdq_1:sdq_5"
+"0","  )"
+"2","
+[36m──[39m [1m[1mColumn specification[1m[22m [36m──────────────────────────────────────────────────────────[39m
+cols(
+  id = [31mcol_character()[39m,
+  redcap_event_name = [31mcol_character()[39m,
+  redcap_survey_identifier = [33mcol_logical()[39m,
+  sdq_timestamp = [34mcol_datetime(format = """")[39m,
+  sdq_1 = [32mcol_double()[39m,
+  sdq_2 = [32mcol_double()[39m,
+  sdq_3 = [32mcol_double()[39m,
+  sdq_4 = [32mcol_double()[39m,
+  sdq_5 = [32mcol_double()[39m,
+  sdq_complete = [32mcol_double()[39m
+)
+
+"
+"0","##replace decline to answer (88) with NA"
+"0","s[s == 88] <- NA"

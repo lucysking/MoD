@@ -1,0 +1,6 @@
+"0","#Libraries"
+"0","library(tidyverse)"
+"0",""
+"0","home <- ""~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"""
+"0",""
+"0","bces_file <- paste0(home, ""BCES/raw_data/bces_raw_data_20210512.csv"")"

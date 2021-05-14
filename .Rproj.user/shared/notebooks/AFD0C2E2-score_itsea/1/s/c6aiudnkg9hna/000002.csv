@@ -1,0 +1,22 @@
+"0","```r
+# depression
+itsea %>% 
+  dplyr::select(
+    itsea_a9, 
+    itsea_a39, 
+    itsea_a40, 
+    itsea_b43, 
+    itsea_b76, 
+    itsea_b81, 
+    itsea_b84, 
+    itsea_b91, 
+    itsea_b92
+  ) %>% 
+  alpha()
+```"
+"1","
+Reliability analysis   
+Call: alpha(x = .)
+
+ 
+"

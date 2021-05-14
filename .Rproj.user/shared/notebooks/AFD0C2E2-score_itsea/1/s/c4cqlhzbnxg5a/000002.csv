@@ -1,0 +1,4 @@
+"0","```r
+itsea %>% 
+  count(activity_concern)
+```"

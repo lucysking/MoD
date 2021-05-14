@@ -1,0 +1,40 @@
+"1","
+                       MR1  MR2
+SS loadings           2.10 1.12
+Proportion Var        0.26 0.14
+Cumulative Var        0.26 0.40
+Proportion Explained  0.65 0.35
+Cumulative Proportion 0.65 1.00
+
+Mean item complexity =  1.4
+Test of the hypothesis that 2 factors are sufficient.
+
+The degrees of freedom for the null model are  28  and the objective function was  1.87 with Chi Square of  274.65
+The degrees of freedom for the model are 13  and the objective function was  0.21 
+
+The root mean square of the residuals (RMSR) is  0.06 
+The df corrected root mean square of the residuals is  0.08 
+
+The harmonic number of observations is  150 with the empirical chi square  27.16  with prob <  0.012 
+The total number of observations was  151  with Likelihood Chi Square =  30.94  with prob <  0.0034 
+
+Tucker Lewis Index of factoring reliability =  0.842
+RMSEA index =  0.095  and the 90 % confidence intervals are  0.053 0.14
+BIC =  -34.29
+Fit based upon off diagonal values = 0.96
+Measures of factor score adequacy             
+                                                   MR1  MR2
+Correlation of (regression) scores with factors   0.92 0.84
+Multiple R square of scores with factors          0.84 0.70
+Minimum correlation of possible factor scores     0.67 0.40
+"
+"0","```r
+itsea_fa2$Vaccounted
+```"
+"1","                            MR1       MR2
+SS loadings           2.0966947 1.1150698
+Proportion Var        0.2620868 0.1393837
+Cumulative Var        0.2620868 0.4014706
+Proportion Explained  0.6528171 0.3471829
+Cumulative Proportion 0.6528171 1.0000000
+"
