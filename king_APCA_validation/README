@@ -1,4 +1,4 @@
-# Information for scripts and data used in Shared worlds and shared consequences: Initial validation of the Assessment of Parent and Child Adversity (APCA) (King et al., 2021).
+Information for scripts and data used in Shared worlds and shared consequences: Initial validation of the Assessment of Parent and Child Adversity (APCA) (King et al., 2021).
 
 score_apca.Rmd uses raw APCA data from sample of mothers and children described in above cited. We do not provide the raw data due to concerns for participant privacy (e.g., answers to some open-ended questions may yield highly sensitive and specific information). 
 
