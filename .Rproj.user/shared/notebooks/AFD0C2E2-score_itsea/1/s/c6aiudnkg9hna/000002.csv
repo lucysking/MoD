@@ -1,22 +1,24 @@
-"0","```r
-# depression
-itsea %>% 
-  dplyr::select(
-    itsea_a9, 
-    itsea_a39, 
-    itsea_a40, 
-    itsea_b43, 
-    itsea_b76, 
-    itsea_b81, 
-    itsea_b84, 
-    itsea_b91, 
-    itsea_b92
-  ) %>% 
-  alpha()
-```"
+"0","# depression"
+"0","itsea %>% "
+"0","  dplyr::select("
+"0","    itsea_a9, "
+"0","    itsea_a39, "
+"0","    itsea_a40, "
+"0","    itsea_b43, "
+"0","    itsea_b76, "
+"0","    itsea_b81, "
+"0","    itsea_b84, "
+"0","    itsea_b91, "
+"0","    itsea_b92"
+"0","  ) %>% "
+"0","  alpha()"
 "1","
-Reliability analysis   
-Call: alpha(x = .)
-
- 
+Reliability analysis "
+"1"," "
+"1"," 
 "
+"1","Call: "
+"1","alpha(x = .)
+"
+"1","
+ "

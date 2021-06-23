@@ -1,136 +1,134 @@
-"0","```r
-itsea <-
-  itsea %>% 
-  group_by(ID) %>% 
-  mutate(
-    # activity/impulsivity scale
-    n_itsea_activity = sum(
-      !is.na(
-        c(
-          itsea_a2, # hurt so often can't take eyes off
-          itsea_a4, # restless and can't sit still
-          itsea_b8, # \"wound up\"/silly when playing
-          itsea_b10, # constantly moving
-          itsea_b27, # very loud, shouts, screams a lot
-          itsea_b32 # goes from toy to toy faster
-        )
-      )
-    ),
-    # aggression/defiance scale
-    n_itsea_agress = sum(
-      !is.na(
-        c(
-          itsea_a28, # destructive, bites, or ruins
-          itsea_a30, # hits, bites, kicks you/other parent
-          itsea_a33, # purposely tries to hurt you/other parent
-          itsea_b3, # aggressive when frustrated
-          itsea_b9, # bossy
-          itsea_b16, # misbehaves to get attention
-          itsea_b30, # disobedient or defiant
-          itsea_b34, # sneaky, hides misbehavior
-          itsea_b44, # stubborn
-          itsea_b88, # temper tantrums
-          itsea_c2, # swears
-          itsea_e4 # hurts animals on purpose
-        )
-      )
-    ),
-    # depression/withdrawal scale
-    n_itsea_depp = sum(
-      !is.na(
-        c(
-          itsea_a9, # less fun than other children
-          itsea_a39, # does not make eye contact
-          itsea_a40, # avoids physical contact
-          itsea_b43, # laughs easily or a lot (reversed, see below)
-          itsea_b76, # unhappy/sad without any reason
-          itsea_b81, # feels bad about stuff
-          itsea_b84, # no energy
-          itsea_b91, # withdrawn
-          itsea_b92 # very unhappy, sad or depressed
-        )
-      )
-    ),
-    # empathy scale
-    n_itsea_empath = sum(
-      !is.na(
-        c(
-          itsea_a22, # tries to help when someone is hurt
-          itsea_b51, # tries make feel better when you're upset
-          itsea_b56, # worried/upset when someone is hurt
-          itsea_b57, # tries to make-up for misbehaving
-          itsea_b63, # aware of other people's feelings
-          itsea_b73, # jokes/gives thing to make smile/laugh
-          itsea_c4 # talks about other people's feelings
-        )
-      )
-    ),
-    # general anxiety scale
-    n_itsea_gad = sum(
-      !is.na(
-        c(
-          itsea_a3, # nervous, tense, or fearful
-          itsea_a12, # worries a lot or very serious
-          itsea_a35, # puts things in special order, over and over
-          itsea_b37, # sick when nervous or upset
-          itsea_b70, # perfectionist
-          itsea_b86, # scary dreams or nightmares
-          itsea_e5, # very worried about getting dirty
-          itsea_e6, # needs things to be clean or neat
-          itsea_e11 # worries about own body
-        )
-      )
-    ),
-    # imitation play scale
-    n_itsea_play = sum(
-      !is.na(
-        c(
-          itsea_a25, # immitates playful sounds when asked
-          itsea_a31, # hugs or feeds dolls or stuffed animals
-          itsea_b25, # rolls a ball back to you
-          itsea_b38, # pretends to do grown-up things
-          itsea_b67, # pretends objects are something else
-          itsea_b71 # imitates clapping or waving bye-bye
-        )
-      )
-    ),
-    # negative emotionality scale
-    n_itsea_negemo = sum(
-      !is.na(
-        c(
-          itsea_a7, # cries or tantrums until exhausted
-          itsea_a21, # trouble adjusting to changes
-          itsea_a23, # often very upset
-          itsea_b31, # cries if doesn't get own way
-          itsea_b45, # hard to soothe when upset
-          itsea_b50, # wakes grouchy or in a bad mood
-          itsea_b53, # trouble calming down when upset
-          itsea_b59, # impatient or easily frustrated
-          itsea_b65, # able to wait for things
-          itsea_b66, # cries a lot
-          itsea_b74, # irritable or grouchy
-          itsea_b80, # whiny/fussy when not tired
-          itsea_b85 # gets angry or pouts
-        )
-      )
-    ),
-    # social relatedness item cluster
-    n_itsea_social = sum(
-      !is.na(
-        c(
-          itsea_a10, # looks for you/other parent when upset
-          itsea_a13, # looks right at you when say his/her name
-          itsea_a15, # affectionate with loved ones
-          itsea_b6, # responds first time name is called
-          itsea_b19, # hugs with a squeeze or a pat
-          itsea_b26, # likes being cuddled, hugged, or kissed
-          itsea_b28, # reaches for you when not holding
-          itsea_b42, # prefers you/other parent over other adults
-          itsea_b60, # interested in babies/children
-          itsea_b90 # smiles back at you from across a room 
-        )
-      )
-    )
-  ) %>% 
-  ungroup()
-```"
+"0","itsea <-"
+"0","  itsea %>% "
+"0","  group_by(ID) %>% "
+"0","  mutate("
+"0","    # activity/impulsivity scale"
+"0","    n_itsea_activity = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a2, # hurt so often can't take eyes off"
+"0","          itsea_a4, # restless and can't sit still"
+"0","          itsea_b8, # ""wound up""/silly when playing"
+"0","          itsea_b10, # constantly moving"
+"0","          itsea_b27, # very loud, shouts, screams a lot"
+"0","          itsea_b32 # goes from toy to toy faster"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # aggression/defiance scale"
+"0","    n_itsea_agress = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a28, # destructive, bites, or ruins"
+"0","          itsea_a30, # hits, bites, kicks you/other parent"
+"0","          itsea_a33, # purposely tries to hurt you/other parent"
+"0","          itsea_b3, # aggressive when frustrated"
+"0","          itsea_b9, # bossy"
+"0","          itsea_b16, # misbehaves to get attention"
+"0","          itsea_b30, # disobedient or defiant"
+"0","          itsea_b34, # sneaky, hides misbehavior"
+"0","          itsea_b44, # stubborn"
+"0","          itsea_b88, # temper tantrums"
+"0","          itsea_c2, # swears"
+"0","          itsea_e4 # hurts animals on purpose"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # depression/withdrawal scale"
+"0","    n_itsea_depp = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a9, # less fun than other children"
+"0","          itsea_a39, # does not make eye contact"
+"0","          itsea_a40, # avoids physical contact"
+"0","          itsea_b43, # laughs easily or a lot (reversed, see below)"
+"0","          itsea_b76, # unhappy/sad without any reason"
+"0","          itsea_b81, # feels bad about stuff"
+"0","          itsea_b84, # no energy"
+"0","          itsea_b91, # withdrawn"
+"0","          itsea_b92 # very unhappy, sad or depressed"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # empathy scale"
+"0","    n_itsea_empath = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a22, # tries to help when someone is hurt"
+"0","          itsea_b51, # tries make feel better when you're upset"
+"0","          itsea_b56, # worried/upset when someone is hurt"
+"0","          itsea_b57, # tries to make-up for misbehaving"
+"0","          itsea_b63, # aware of other people's feelings"
+"0","          itsea_b73, # jokes/gives thing to make smile/laugh"
+"0","          itsea_c4 # talks about other people's feelings"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # general anxiety scale"
+"0","    n_itsea_gad = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a3, # nervous, tense, or fearful"
+"0","          itsea_a12, # worries a lot or very serious"
+"0","          itsea_a35, # puts things in special order, over and over"
+"0","          itsea_b37, # sick when nervous or upset"
+"0","          itsea_b70, # perfectionist"
+"0","          itsea_b86, # scary dreams or nightmares"
+"0","          itsea_e5, # very worried about getting dirty"
+"0","          itsea_e6, # needs things to be clean or neat"
+"0","          itsea_e11 # worries about own body"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # imitation play scale"
+"0","    n_itsea_play = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a25, # immitates playful sounds when asked"
+"0","          itsea_a31, # hugs or feeds dolls or stuffed animals"
+"0","          itsea_b25, # rolls a ball back to you"
+"0","          itsea_b38, # pretends to do grown-up things"
+"0","          itsea_b67, # pretends objects are something else"
+"0","          itsea_b71 # imitates clapping or waving bye-bye"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # negative emotionality scale"
+"0","    n_itsea_negemo = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a7, # cries or tantrums until exhausted"
+"0","          itsea_a21, # trouble adjusting to changes"
+"0","          itsea_a23, # often very upset"
+"0","          itsea_b31, # cries if doesn't get own way"
+"0","          itsea_b45, # hard to soothe when upset"
+"0","          itsea_b50, # wakes grouchy or in a bad mood"
+"0","          itsea_b53, # trouble calming down when upset"
+"0","          itsea_b59, # impatient or easily frustrated"
+"0","          itsea_b65, # able to wait for things"
+"0","          itsea_b66, # cries a lot"
+"0","          itsea_b74, # irritable or grouchy"
+"0","          itsea_b80, # whiny/fussy when not tired"
+"0","          itsea_b85 # gets angry or pouts"
+"0","        )"
+"0","      )"
+"0","    ),"
+"0","    # social relatedness item cluster"
+"0","    n_itsea_social = sum("
+"0","      !is.na("
+"0","        c("
+"0","          itsea_a10, # looks for you/other parent when upset"
+"0","          itsea_a13, # looks right at you when say his/her name"
+"0","          itsea_a15, # affectionate with loved ones"
+"0","          itsea_b6, # responds first time name is called"
+"0","          itsea_b19, # hugs with a squeeze or a pat"
+"0","          itsea_b26, # likes being cuddled, hugged, or kissed"
+"0","          itsea_b28, # reaches for you when not holding"
+"0","          itsea_b42, # prefers you/other parent over other adults"
+"0","          itsea_b60, # interested in babies/children"
+"0","          itsea_b90 # smiles back at you from across a room "
+"0","        )"
+"0","      )"
+"0","    )"
+"0","  ) %>% "
+"0","  ungroup()"

@@ -1,0 +1,138 @@
+---
+title: "Wrangle proteomics data"
+author: "Lucy King"
+date: "5/26/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(corrr)
+
+home <- "~/Box/Mooddata_Coordinating/MOD/Data/"
+
+proteomics_file <- paste0(home, "Inflammation/olink_january_2021/20210166_Wong_NPX.xlsx")
+olink_mod_id_file <- paste0(home, "Inflammation/olink_january_2021/Olink_MoD_ID_link.csv")
+```
+
+# Read in data
+```{r}
+p <-
+  readxl::read_xlsx(proteomics_file, skip = 3) %>% 
+  rename(
+    olink_id = Assay
+  )
+```
+
+# Clean up
+CM = cardiometabolic panel
+CV = cardiovascular panel
+CR = cell regulation panel
+DV = development panel
+IR = immune response
+IF = inflammation
+MT = metabolism
+NE = neuroexploratory
+NR = neurology
+OC = oncology
+OD = organ damage
+
+```{r}
+p1 <-
+  p %>% 
+  filter(
+    olink_id != "Uniprot ID" 
+    & olink_id != "OlinkID" 
+    & str_detect(olink_id, "^G") == TRUE
+  ) %>% 
+  dplyr::select(-contains("Plate ID")) %>% 
+  rename_with(
+    .fn = ~str_replace(., "-", "")
+  ) %>% 
+  rename_at(
+    vars(PRCP:C2),
+    funs(paste0(., "_CM"))
+  ) %>% 
+  rename_at(
+    vars(BMP6:HAOX1),
+    funs(paste0(., "_CV2"))
+  ) %>% 
+  rename_at(
+    vars(TNFRSF14:CCL16),
+    funs(paste0(., "_CV3"))
+  ) %>% 
+  rename_at(
+    vars(GCG:GCNT1),
+    funs(paste0(., "_CR"))
+  ) %>% 
+  rename_at(
+    vars(CTSF:CD209),
+    funs(paste0(., "_DV"))
+  ) %>% 
+  rename_at(
+    vars(PPP1R9B:BTN3A2),
+    funs(paste0(., "_IR"))
+  ) %>% 
+  rename_at(
+    vars(IL8:CSF1),
+    funs(paste0(., "_IF"))
+  ) %>% 
+  rename_at(
+    vars(CLMP:RNASE3),
+    funs(paste0(., "_MT"))
+  ) %>% 
+  rename_at(
+    vars(IFNL1:CD63),
+    funs(paste0(., "_NE"))
+  ) %>% 
+  rename_at(
+    vars(NMNAT1:KYNU),
+    funs(paste0(., "_NR"))
+  ) %>% 
+  rename_at(
+    vars(TXLNA:FRalpha),
+    funs(paste0(., "_OC2"))
+  ) %>% 
+  rename_at(
+    vars(CD22:NPY),
+    funs(paste0(., "_OC3"))
+  ) %>% 
+   rename_at(
+    vars(CLSPN:CALR),
+    funs(paste0(., "_OD"))
+  ) %>% 
+  rename_with(
+    .fn = ~str_replace(
+      ., 
+      "\\.\\.\\.[:digit:]+", 
+      ""
+      )
+  ) %>% 
+  tibble(.name_repair = "universal") %>% 
+  mutate_at(
+    vars(PRCP_CM:CALR_OD),
+    as.numeric
+  ) %>% 
+  left_join(
+    read_csv(olink_mod_id_file) %>% 
+      dplyr::select(olink_id, id), 
+    by = "olink_id"
+  ) %>% 
+  dplyr::select(
+    id,
+    everything()
+  )
+```
+
+# Examine correlations among selected proteins across panels
+```{r}
+p1 %>% 
+  dplyr::select(contains("IL6_")) %>% 
+  correlate()
+```
+# Export
+```{r}
+write_csv(p1, paste0(home, "Inflammation/olink_january_2021/protemoic_data_formatted.csv"))
+```
+
+

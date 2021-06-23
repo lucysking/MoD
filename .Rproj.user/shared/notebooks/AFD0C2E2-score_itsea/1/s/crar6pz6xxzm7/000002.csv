@@ -1,18 +1,24 @@
-"0","```r
-```r
-# GAD
-itsea %>% 
-  dplyr::select(
-    itsea_a3, 
-    itsea_a12, 
-    itsea_a35, 
-    itsea_b37, 
-    itsea_b70, 
-    itsea_b86, 
-    itsea_e5, 
-    itsea_e6, 
-    itsea_e11
-  ) %>% 
-  alpha()
-```
-```"
+"0","# GAD"
+"0","itsea %>% "
+"0","  dplyr::select("
+"0","    itsea_a3, "
+"0","    itsea_a12, "
+"0","    itsea_a35, "
+"0","    itsea_b37, "
+"0","    itsea_b70, "
+"0","    itsea_b86, "
+"0","    itsea_e5, "
+"0","    itsea_e6, "
+"0","    itsea_e11"
+"0","  ) %>% "
+"0","  alpha()"
+"1","
+Reliability analysis "
+"1"," "
+"1"," 
+"
+"1","Call: "
+"1","alpha(x = .)
+"
+"1","
+ "

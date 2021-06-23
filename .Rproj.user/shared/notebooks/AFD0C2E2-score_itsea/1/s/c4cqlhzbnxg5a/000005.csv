@@ -1,5 +1,0 @@
-"0","```r
-
-itsea %>% 
-  count(gad_concern)
-```"

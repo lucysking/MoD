@@ -1,24 +1,17 @@
-"0","dc <-
-  d %>% 
-  select(
-    id = AssessedPersonId,
-    date = DateOnForm,
-    ends_with(""_Total""),
-    c15_prob_1:c15_prob_99,
-    -Language_Development_Survey_Total:-Vocabulary_Score_for_30_35_months_Total
-  ) %>% 
-  rename_all(
-    funs(str_to_lower(.))
-  )
-"
-"2","`funs()` was deprecated in dplyr 0.8.0.
-Please use a list of either functions or lambdas: 
-
-  # Simple named list: 
-  list(mean = mean, median = median)
-
-  # Auto named with `tibble::lst()`: 
-  tibble::lst(mean, median)
-
-  # Using lambdas
-  list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))"
+"0","dc <-"
+"0","  d %>% "
+"0","  dplyr::select("
+"0","    id = AssessedPersonId,"
+"0","    date = DateOnForm,"
+"0","    ends_with(""_Total""),"
+"0","    ends_with(""_TScore""),"
+"0","    c15_prob_1:c15_prob_99,"
+"0","    -Language_Development_Survey_Total:-Vocabulary_Score_for_30_35_months_Total"
+"0","  ) %>% "
+"0","  rename_all("
+"0","    list(~str_to_lower(.))"
+"0","  ) %>% "
+"0","  mutate_at("
+"0","    vars(emotionally_reactive_total:oppositional_defiant_problems_total),"
+"0","    as.numeric"
+"0","  )"

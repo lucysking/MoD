@@ -1,5 +1,14 @@
-"0","```r
-
-itsea %>% 
-  count(depp_concern)
-```"
+"1","
+ lower alpha upper     95% confidence boundaries
+"
+"1","0.52"
+"1"," "
+"1","0.61"
+"1"," "
+"1","0.71"
+"1"," "
+"1","
+"
+"1","
+ Reliability if an item is dropped:
+"

@@ -1,8 +1,28 @@
-"0","```r
-itsea %>% 
-  dplyr::select(itsea_activity:itsea_social) %>% 
-  gather(itsea_subscale, score, itsea_activity:itsea_social) %>% 
-  ggplot(aes(score, color = itsea_subscale)) +
-  geom_freqpoly(bins = 5, size = 2, alpha = 1/2) +
-  theme_minimal()
-```"
+"0","# negative emotionality"
+"0","itsea %>% "
+"0","  dplyr::select("
+"0","    itsea_a7, "
+"0","    itsea_a21, "
+"0","    itsea_a23, "
+"0","    itsea_b31, "
+"0","    itsea_b45, "
+"0","    itsea_b50, "
+"0","    itsea_b53, "
+"0","    itsea_b59, "
+"0","    itsea_b65, "
+"0","    itsea_b66, "
+"0","    itsea_b74, "
+"0","    itsea_b80, "
+"0","    itsea_b85"
+"0","  ) %>% "
+"0","  alpha()"
+"1","
+Reliability analysis "
+"1"," "
+"1"," 
+"
+"1","Call: "
+"1","alpha(x = .)
+"
+"1","
+ "

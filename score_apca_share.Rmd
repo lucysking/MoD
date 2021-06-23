@@ -1,0 +1,881 @@
+---
+title: "Score the Assessment of Parent and Child Adversity"
+author: "Lucy King"
+date: "6/23/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Environment
+```{r}
+library(tidyverse)
+library(purrr)
+library(rlang)
+library(reactable)
+library(lubridate)
+
+apca_raw_file <- "FILE PATH TO YOUR RAW APCA DATA IN CSV FORMAT"
+
+options(
+  reactable.theme = reactableTheme(
+    style = list(
+      fontFamily = "Arial")
+  )
+)
+```
+
+# Read in data
+```{r}
+a <-
+  read_csv(apca_raw_file) %>% 
+  mutate_at(
+    vars(
+      disaster:other1,
+      other1_freq:other2,
+      other2_freq:sexab_child_sev_dir
+    ),
+    as.numeric
+  ) %>% 
+  mutate_at(
+    vars(contains("since_child")),
+    as.numeric
+  ) 
+
+##replace decline to answer (88) and -888 (NA) values with NA
+a[a == 88] <- NA
+```
+
+# Score APCA
+
+## Total caregiver adversities
+```{r}
+# select the names of all variables measuring exposure to parent adversity
+parent_types <-
+  a %>% 
+  dplyr::select(
+    disas:death,
+    bully:other1,
+    other2,
+    -ill_child_exp_dir
+  ) %>% 
+  names()
+```
+
+```{r}
+# sum across these binary (1 = yes/0 = no) variables
+a <- 
+  a %>% 
+  mutate(
+    parent_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(parent_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histogram of number of parent adversities
+a %>% 
+  ggplot(aes(parent_num_types)) +
+  geom_histogram(binwidth = 2)
+```
+
+## Total subjective severity of caregiver adversities
+```{r}
+# select the names of all variables measuring parents' perceived severity of their adversities
+parent_sev_ratings <- 
+  a %>% 
+  dplyr::select(contains("_sev")) %>% 
+  dplyr::select(-contains("_sev_wit")) %>% 
+  dplyr::select(-contains("_sev_dir")) %>% 
+  dplyr::select(-ill_child_sev) %>% 
+  names()
+```
+
+```{r}
+# sum across perceived severity ratings for parental adversities
+a <- 
+  a %>% 
+  mutate(
+    parent_sum_sev = 
+      pmap_dbl(
+      dplyr::select(., all_of(parent_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histogram of cumulative perceived severity of parental adversities 
+a %>% 
+  ggplot(aes(parent_sum_sev)) +
+  geom_histogram(binwidth = 5)
+```
+
+## Total caregiver adversities since child's birth
+```{r}
+# select names of all variables measuring whether parental adversities occurred since birth of the focal child
+since_child_types <-
+  a %>% 
+  dplyr::select(contains("since_child")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables measuring parental adversities occured since child's birth (1=yes, 0-=no)
+a <- 
+  a %>% 
+  mutate(
+    since_child_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(since_child_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histogram of number of parental adversities that occured since child's birth
+a %>% 
+  ggplot(aes(since_child_num_types)) +
+  geom_histogram(binwidth = 5)
+```
+
+## Total subjective of severity caregiver adversities since child's birth
+
+```{r}
+# select names of parents' perceived severity ratings for only events that could have occurred since child's birth 
+parent_sev_since_child <-
+  a %>% 
+  dplyr::select(contains("since_child")) %>% 
+  rename_all(
+    ~str_replace(., "_since_child", "_sev")
+  ) %>% 
+  dplyr::select(-since_child_num_types) %>% 
+  names()
+```
+
+```{r}
+# create a data frame of just the events and severity ratings that could have occurred since child's birth
+a_sc <-
+  a %>% 
+  dplyr::select(id, all_of(since_child_types), all_of(parent_sev_since_child))
+
+# select names of of events that could have occurred since child's birth
+a_sc_names <- 
+  a_sc %>% 
+  dplyr::select(since_child_types) %>% 
+  rename_all(
+    ~str_replace(., "_since_child", "")
+  ) %>% 
+  names()
+
+# use map to multiply event columns by severity columns that match the prefix value (i.e., the event type); if event did not happen since child's birth, product will be 0 
+# then name these new product columns and add to the data frame 
+a_sc <- 
+  a_sc_names %>% 
+  map(
+    ~a_sc %>% 
+      dplyr::select(matches(.x)) %>%
+      reduce(`*`)) %>%
+  set_names(
+    paste0(a_sc_names, "since_child_sev")
+  ) %>% 
+  bind_cols(a_sc, .) 
+
+```
+
+```{r}
+# merge "since_child" severity ratings with master data frame and compute summed score representing cumulative perceived severity of parental adversities occuring since child's birth
+a <-
+  a %>% 
+  left_join(
+    a_sc %>% 
+      dplyr::select(id, ends_with("since_child_sev")), by = "id"
+  ) 
+
+since_child_sev_ratings <-
+  a %>% 
+  dplyr::select(contains("since_child_sev")) %>% 
+  names()
+
+a <-
+  a %>% 
+  mutate(
+    parent_sum_sev_since_child = 
+      pmap_dbl(
+      dplyr::select(., all_of(since_child_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot historgram of cumulative perceived severity of parental adversities since the child's birth
+a %>% 
+  ggplot(aes(parent_sum_sev_since_child)) +
+  geom_histogram(binwidth = 5)
+```
+
+
+## Total adversities during pregnancy and by trimester
+```{r}
+# select names of variables measuring parental exposure to adversity during all of pregnancy
+preg_types <-
+  a %>% 
+  dplyr::select(ends_with("_preg")) %>% 
+  names()
+
+# select names of variables measuring parental exposure to adversity during the first trimester
+trim1_types <-
+  a %>% 
+  dplyr::select(ends_with("_trim___1")) %>% 
+  names()
+
+# select names of variables measuring parental exposure to adversity during the second trimester
+trim2_types <-
+  a %>% 
+  dplyr::select(ends_with("_trim___2")) %>% 
+  names()
+
+# select names of variables measuring parental exposure to adversity during the third trimester
+trim3_types <-
+  a %>% 
+  dplyr::select(ends_with("_trim___3")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables measuring parental exposure to adversity across pregnancy and during each trimester
+a <-
+  a %>% 
+  mutate(
+    preg_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(preg_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    preg_trim1_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim1_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    preg_trim2_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim2_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    preg_trim3_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim3_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histograms of parent exposure to adversity during pregnancy and in trimester
+a %>% 
+  dplyr::select(
+    preg_num_types:preg_trim3_num_types
+  ) %>% 
+  pivot_longer(preg_num_types:preg_trim3_num_types) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(.~name, scales = "free")
+```
+ 
+## Total subjective severity of adversities during pregnancy and by trimester
+```{r}
+# select names of severity ratings for events that could have occurred during pregnancy 
+sev_preg <-
+  a %>% 
+  dplyr::select(ends_with("_preg")) %>% 
+  rename_all(
+    ~str_replace(., "_preg", "_sev")
+  ) %>% 
+  names()
+```
+
+```{r}
+# create a data frame of just the events and severity ratings that could have during pregnancy
+a_p <-
+  a %>% 
+  dplyr::select(id, all_of(preg_types), all_of(sev_preg))
+
+# select names of of events that could have occurred during pregnancy
+a_p_names <- 
+  a_p %>% 
+  dplyr::select(preg_types) %>% 
+  rename_all(
+    ~str_replace(., "_preg", "")
+  ) %>% 
+  names()
+
+# use map to multiply event columns by severity columns that match the prefix value (i.e., the event type); if event did not happen during pregnancy, product will be 0 
+# then name these new product columns and add to the data frame 
+a_p <- 
+  a_p_names %>% 
+  map(
+    ~a_p %>% 
+      dplyr::select(matches(.x)) %>%
+      reduce(`*`)) %>%
+  set_names(
+    paste0(a_p_names, "_preg_sev")
+  ) %>% 
+  bind_cols(a_p, .) 
+```
+
+```{r}
+# repeat for first trimester 
+a_p1 <-
+  a %>% 
+  dplyr::select(id, all_of(trim1_types), all_of(sev_preg))
+
+a_p1 <- 
+  a_p_names %>% 
+  map(
+    ~a_p1 %>% 
+      dplyr::select(matches(.x)) %>%
+      reduce(`*`)) %>%
+  set_names(
+    paste0(a_p_names, "_trim1_sev")
+  ) %>% 
+  bind_cols(a_p1, .) 
+```
+
+```{r}
+# repeat for second trimester 
+a_p2 <-
+  a %>% 
+  dplyr::select(id, all_of(trim2_types), all_of(sev_preg))
+
+a_p2 <- 
+  a_p_names %>% 
+  map(
+    ~a_p2 %>% 
+      dplyr::select(matches(.x)) %>%
+      reduce(`*`)) %>%
+  set_names(
+    paste0(a_p_names, "_trim2_sev")
+  ) %>% 
+  bind_cols(a_p2, .) 
+```
+
+```{r}
+# repeat for third trimester 
+a_p3 <-
+  a %>% 
+  dplyr::select(id, all_of(trim3_types), all_of(sev_preg))
+
+a_p3 <- 
+  a_p_names %>% 
+  map(
+    ~a_p3 %>% 
+      dplyr::select(matches(.x)) %>%
+      reduce(`*`)) %>%
+  set_names(
+    paste0(a_p_names, "_trim3_sev")
+  ) %>% 
+  bind_cols(a_p3, .) 
+```
+
+```{r}
+# merge pregnancy and trimester perceived parental severity ratings with master data frame 
+a <-
+  a %>% 
+  left_join(
+    a_p %>% 
+      dplyr::select(id, ends_with("_preg_sev")), by = "id"
+  ) %>% 
+  left_join(
+    a_p1 %>% 
+      dplyr::select(id, ends_with("_trim1_sev")), by = "id"
+  ) %>% 
+  left_join(
+    a_p2 %>% 
+      dplyr::select(id, ends_with("_trim2_sev")), by = "id"
+  ) %>% 
+  left_join(
+    a_p3 %>% 
+      dplyr::select(id, ends_with("_trim3_sev")), by = "id"
+  )
+```
+
+```{r}
+# select names of variables measuring parental perceived severity of adversities during pregnancy and in each trimester
+preg_sev_ratings <-
+  a %>% 
+  dplyr::select(ends_with("_preg_sev")) %>% 
+  names()
+
+trim1_sev_ratings <-
+  a %>% 
+  dplyr::select(ends_with("_trim1_sev")) %>% 
+  names()
+
+trim2_sev_ratings <-
+  a %>% 
+  dplyr::select(ends_with("_trim2_sev")) %>% 
+  names()
+
+trim3_sev_ratings <-
+  a %>% 
+  dplyr::select(ends_with("_trim3_sev")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables meausuring parental perceived severity of adversity during prengnancy and in each trimester
+a <-
+  a %>% 
+  mutate(
+    sum_sev_preg = 
+      pmap_dbl(
+      dplyr::select(., all_of(preg_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    sum_sev_trim1 = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim1_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    sum_sev_trim2 = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim2_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    sum_sev_trim3 = 
+      pmap_dbl(
+      dplyr::select(., all_of(trim3_sev_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histograms of cumulative  perceived severity of parental adversities during pregnancy and in each trimester
+a %>% 
+  dplyr::select(
+    sum_sev_preg:sum_sev_trim3
+  ) %>% 
+  pivot_longer(sum_sev_preg:sum_sev_trim3) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(.~name, scales = "free")
+```
+
+## Adversities to which child was exposed (totat, direct, witnessed)
+
+```{r}
+# select names of variables measuring any type of child exposure to adversity, including direct adversity and witnessing of parental adversity
+child_exp_types <-
+  a %>% 
+  dplyr::select(ends_with("child_exp_dir"), ends_with("child_exp_wit")) %>% 
+  names()
+
+# select names of variables measuring child witnessing of parental adversities
+child_exp_wit_types <- 
+  a %>% 
+  dplyr::select(ends_with("child_exp_wit")) %>% 
+  names()
+
+#select names of variables measuring child direct exposure to adversity
+child_exp_dir_types <- 
+  a %>% 
+  dplyr::select(ends_with("child_exp_dir")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables measure total, witnessed, and direct child adversity
+a <-
+  a %>% 
+  mutate(
+    child_num_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(child_exp_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    child_num_wit_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(child_exp_wit_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    child_num_dir_types = 
+      pmap_dbl(
+      dplyr::select(., all_of(child_exp_dir_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histogram of child total, direct, and witnessed adversity
+a %>% 
+  ggplot(aes(child_num_types)) +
+  geom_histogram(binwidth = 1)
+
+a %>% 
+  ggplot(aes(child_num_wit_types)) +
+  geom_histogram(binwidth = 1)
+
+a %>% 
+  ggplot(aes(child_num_dir_types)) +
+  geom_histogram(binwidth = 1)
+```
+## Total perceived severity of adversity to which child was exposed (direct or happened during child's lifetime)
+
+```{r}
+# select names of variables measuring parents' perceived severity for child of adversities, witnessed or direct
+sev_child_ratings <-
+  a %>% 
+  dplyr::select(ends_with("_child_sev_dir"), ends_with("_child_sev_wit")) %>% 
+  names()
+
+# select names of variables parents' perceived severity for child of witnessed adversity 
+sev_child_indir_ratings <- 
+  a %>% 
+  dplyr::select(ends_with("_child_sev_wit")) %>% 
+  names()
+
+# select names of variables parents' perceived severity for child of direct adversity
+sev_child_dir_ratings <- 
+  a %>% 
+  dplyr::select(ends_with("_child_sev_dir")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables measuring parents' perceived severity for child total, direct, and witnessed adversity
+a <-
+  a %>% 
+  mutate(
+    child_sum_sev = 
+      pmap_dbl(
+      dplyr::select(., all_of(sev_child_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    child_sum_sev_wit = pmap_dbl(
+      dplyr::select(., all_of(sev_child_indir_ratings)),
+      function(...) sum(c(...), na.rm = TRUE),
+    child_sum_sev_dir =  pmap_dbl(
+      dplyr::select(., all_of(sev_child_dir_ratings)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+    )
+  )
+```
+
+```{r}
+# plot histograms of parents' perceived severity for child of total, witnessed, and direct adversity
+a %>% 
+  ggplot(aes(child_sum_sev)) +
+  geom_histogram(binwidth = 1)
+
+a %>% 
+  ggplot(aes(child_sum_sev_wit)) +
+  geom_histogram(binwidth = 1)
+
+a %>% 
+  ggplot(aes(child_sum_sev_dir)) +
+  geom_histogram(binwidth = 1)
+```
+
+## Wrangle parent ages of onset and offset of adversities
+
+```{r}
+# select names of parental age of onset variables
+parent_age_onsets <- 
+  a %>% 
+  dplyr::select(contains("age_onset")) %>% 
+  names()
+```
+
+```{r}
+# reformat data for wrangling 
+a_ages_lf <-
+  a %>% 
+  dplyr::select(
+    id, 
+    contains("age_onset"),
+    contains("age_offset"),
+    contains("ongoing"),
+    preg_types,
+    since_child_types,
+    #these will be counted as child direct adversity
+    -ill_child_age_onset, 
+    -ill_child_age_offset, 
+    -ill_child_ongoing,
+    # rename for easier wrangling
+    mentalill_age_onset = mental_ill_age_onset, # rename for easier wranglung
+    mentalill_age_offset = mental_ill_age_offset,
+    mentalill_preg = mental_ill_preg,
+    mentalill_since = mental_ill_since_child,
+    mentalill_ongoing = mental_ill_ongoing
+  ) %>% 
+  rename_with(
+    .fn = ~str_replace(., "_since_child", "_since")
+  ) %>% 
+  rename_with(
+    .fn = ~str_replace(., "_age_", "_")
+  ) %>% 
+  rename_with(
+    .fn = ~str_replace(., "deathn", "death")
+  ) %>% 
+  pivot_longer(
+    cols = other1_onset:last_col(),
+    names_to = c("event_type",".value"),
+    names_sep = "_"
+  ) %>% 
+  filter(!is.na(onset)) 
+```
+
+```{r}
+# plot histogram of ages of onset for parental adversity
+a_ages_lf %>% 
+  ggplot(aes(onset)) +
+  geom_histogram()
+```
+
+```{r}
+# create variables indicating whether adversity occured during parent's child, adulthood, and prior to conception of the child
+a_ages_lf <-
+  a_ages_lf %>% 
+  mutate(
+    # any adversity that occurred prior to age 18 years
+    parent_childhood = if_else(
+      onset < 18, 1, 0
+    ),
+    # any adversity that occurred after age 18 years or is ongoing
+    parent_adulthood = case_when(
+      onset >= 18 ~ 1,
+      offset >= 18 ~ 1,
+      ongoing == 1 ~ 1,
+      TRUE ~ 0
+    ),
+    # adversity that occurred after age 18 years, but did not occur since pregnant (i.e., did not occur in pregnancy or since the child's birth and is not ongoing)
+    parent_precon = case_when(
+      parent_adulthood == 1 & preg == 0 & ongoing == 0 & since == 0 ~ 1,
+      parent_adulthood == 1 & is.na(preg) ~ 0,
+      parent_adulthood == 1 & is.na(since) ~ 0,
+      parent_adulthood == 1 & is.na(ongoing) ~ 0,
+      TRUE ~ 0
+    )
+  )
+```
+
+```{r}
+# return to wide format and join with master dataset 
+a_ages_wf <-
+  a_ages_lf %>% 
+  dplyr::select(
+    id, 
+    event_type, 
+    parent_childhood, 
+    parent_adulthood,
+    parent_precon
+  ) %>% 
+  pivot_wider(
+    names_from = event_type,
+    values_from = c(parent_childhood, parent_adulthood, parent_precon)
+  )
+
+a <-
+  a %>% 
+  left_join(a_ages_wf, by = "id")
+```
+
+## Total parent childhood, adulthood, and peconception adversity
+```{r}
+# select names of variables measuring parental exposure to adversity during childhood
+parent_childhood_types <-
+  a %>% 
+  dplyr::select(contains("_childhood")) %>% 
+  names()
+
+# select names of variables measuring parental exposure to adversity during adulthood
+parent_adulthood_types <-
+  a %>% 
+  dplyr::select(contains("_adulthood")) %>% 
+  names()
+
+# select names of variables measuring parental exposure to adversity prior to the conception of the focal child
+parent_precon_types <-
+  a %>% 
+  dplyr::select(contains("_precon")) %>% 
+  names()
+```
+
+```{r}
+# sum across variables measuring parental exposure to adversity during childhood, adulthood, and prior to conception of the focal child
+a <- 
+  a %>% 
+  mutate(
+    parent_num_childhood = 
+      pmap_dbl(
+      dplyr::select(., all_of(parent_childhood_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    parent_num_adulthood = pmap_dbl(
+      dplyr::select(., all_of(parent_adulthood_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    ),
+    parent_num_precon= pmap_dbl(
+      dplyr::select(., all_of(parent_precon_types)),
+      function(...) sum(c(...), na.rm = TRUE)
+    )
+  )
+```
+
+```{r}
+# plot histograms of parental total exposure to adversity in childhood, adulthood, and prior to conception 
+a %>% 
+  ggplot(aes(parent_num_childhood)) +
+  geom_histogram(binwidth = 2)
+
+a %>% 
+  ggplot(aes(parent_num_adulthood)) +
+  geom_histogram(binwidth = 2)
+
+a %>% 
+  ggplot(aes(parent_num_precon)) +
+  geom_histogram(binwidth = 2)
+```
+
+## Wrangle child ages of indirect exposure
+```{r}
+# reformat data 
+a_child_ages_lf <-
+  a %>% 
+  dplyr::select(id, contains("child_age_wit")) %>% 
+  rename_with(
+    ~str_replace(., "child_age_wit", "age"),
+    ends_with("child_age_wit")
+  ) %>% 
+  rename_with(
+    ~str_replace(., "child_age_wit_unit", "unit"),
+    ends_with("child_age_wit_unit")
+  ) %>% 
+  rename(
+    # for easier wrangling 
+    mentalill_age = mental_ill_age,
+    mentalill_unit = mental_ill_unit
+  ) %>% 
+  pivot_longer(
+    cols = other1_age:last_col(),
+    names_to = c("key", ".value"),
+    names_sep = "_"
+  ) %>% 
+  mutate(
+    # create single age in years variable
+    age_years = case_when(
+      unit == "1" ~ age / 12,
+      unit == "2" ~ age,
+      age == 0 ~ 0
+    ),
+    key = if_else(
+      key == "mentalill", "mental_ill", key
+    )
+  ) %>% 
+  filter(!is.na(age)) %>% 
+  arrange(key) %>% 
+  dplyr::select(
+    id, 
+    key,
+    age_years
+  )
+```
+
+```{r}
+# plot histogram of child age of indirect exposure
+a_child_ages_lf %>% 
+  ggplot(aes(age_years)) +
+  geom_histogram(binwidth = 2)
+
+```
+
+```{r}
+# return to wide format
+a_child_ages_wf <-
+  a_child_ages_lf %>% 
+  pivot_wider(
+    names_from = key,
+    values_from = age_years
+  ) %>% 
+  rename_at(
+    vars(abort:last_col()),
+    funs(paste0(., "_child_age"))
+  )
+```
+
+## Wrangle child ages of direct exposure
+```{r}
+# reformat data
+a_child_ages_dir_lf <-
+  a %>% 
+  dplyr::select(id, contains("child_age_dir")) %>% 
+  rename_with(
+    ~str_replace(., "child_age_dir", "age"),
+    ends_with("child_age_dir")
+  ) %>% 
+  rename_with(
+    ~str_replace(., "child_age_dir_unit", "unit"),
+    ends_with("child_age_dir_unit")
+  ) %>% 
+  pivot_longer(
+    cols = ill_age:last_col(),
+    names_to = c("key", ".value"),
+    names_sep = "_"
+  ) %>% 
+  mutate(
+    # create single age in years variable
+    age_years = case_when(
+      unit == "1" ~ age / 12,
+      unit == "2" ~ age,
+      age == 0 ~ 0
+    ),
+  ) %>% 
+  filter(!is.na(age)) %>% 
+  arrange(key) %>% 
+  dplyr::select(
+    id, 
+    key,
+    age_years
+  )
+
+```
+
+```{r}
+# plot histogram of child age of direct exposure
+a_child_ages_dir_lf %>% 
+  ggplot(aes(age_years)) +
+  geom_histogram(binwidth = 2)
+
+```
+
+```{r}
+# return to wide format
+a_child_ages_dir_wf <-
+  a_child_ages_dir_lf %>% 
+  pivot_wider(
+    names_from = key,
+    values_from = age_years
+  ) %>% 
+  rename_at(
+    vars(acc:last_col()),
+    funs(paste0(., "_child_age_dir"))
+  )
+```
+
+# Export data
+```{r}
+write_csv(
+  a, 
+  "YOUR FILE PATH AND NAME FOR SCORED DATA"
+)
+
+```
+

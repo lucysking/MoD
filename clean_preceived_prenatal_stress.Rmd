@@ -1,0 +1,97 @@
+---
+title: "Clean MoD Prenatal Longitudinal Perceived Stress"
+author: "Lucy King"
+date: "5/28/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+
+mod_longitudinal_stress_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/MoD_Pregnancy_Project/longitudinal_stress_perceived.csv"
+```
+
+```{r}
+m <-
+  read_csv(mod_longitudinal_stress_file) %>% 
+  rename(
+    id = patient_id,
+    gestational_weeks = redcap_event_name
+  ) %>% 
+  mutate(
+    gestational_weeks_F = case_when(
+      gestational_weeks == "ga_1316_prenatal_v_arm_1" ~ "13-16",
+      gestational_weeks == "ga_14_prenatal_vis_arm_1" ~ "13-16",
+      gestational_weeks == "ga_1720_prenatal_v_arm_1" ~ "17-20",
+      gestational_weeks == "ga_2124_prenatal_v_arm_1" ~ "21-24",
+      gestational_weeks == "ga_2528_prenatal_v_arm_1" ~ "25-28",
+      gestational_weeks == "ga_2930_prenatal_v_arm_1" ~ "29-30",
+      gestational_weeks == "ga_3132_prenatal_v_arm_1" ~ "31-32",
+      gestational_weeks == "ga_3334_prenatal_v_arm_1" ~ "33-34",
+      gestational_weeks == "ga_3536_prenatal_v_arm_1" ~ "35-36",
+      gestational_weeks == "ga_37_prenatal_vis_arm_1" ~ "37-40",
+      gestational_weeks == "ga_38_prenatal_vis_arm_1" ~ "37-40",
+      gestational_weeks == "ga_39_prenatal_vis_arm_1" ~ "37-40",
+      gestational_weeks == "ga_40_prenatal_vis_arm_1" ~ "37-40"
+    ),
+    gestational_weeks = case_when(     
+      gestational_weeks == "ga_1316_prenatal_v_arm_1" ~ 13,
+      gestational_weeks == "ga_14_prenatal_vis_arm_1" ~ 13,
+      gestational_weeks == "ga_1720_prenatal_v_arm_1" ~ 17,
+      gestational_weeks == "ga_2124_prenatal_v_arm_1" ~ 21,
+      gestational_weeks == "ga_2528_prenatal_v_arm_1" ~ 25,
+      gestational_weeks == "ga_2930_prenatal_v_arm_1" ~ 29,
+      gestational_weeks == "ga_3132_prenatal_v_arm_1" ~ 31,
+      gestational_weeks == "ga_3334_prenatal_v_arm_1" ~ 33,
+      gestational_weeks == "ga_3536_prenatal_v_arm_1" ~ 35,
+      gestational_weeks == "ga_37_prenatal_vis_arm_1" ~ 37,
+      gestational_weeks == "ga_38_prenatal_vis_arm_1" ~ 37,
+      gestational_weeks == "ga_39_prenatal_vis_arm_1" ~ 37,
+      gestational_weeks == "ga_40_prenatal_vis_arm_1" ~ 37
+    )
+  ) %>% 
+  dplyr::select(
+    -longstress_datetime,
+    -redcap_data_access_group
+  ) 
+
+```
+
+```{r}
+m %>% 
+  count(gestational_weeks)
+```
+
+```{r}
+m_means <-
+  m %>% 
+  group_by(id) %>% 
+  summarise(
+    preg_stress_pastwk_M = mean(longstress_pastweek, na.rm = TRUE),
+    preg_stress_pastmo_M = mean(longstress_pastmonth, na.rm = TRUE),
+    preg_stress_past3mo_M = mean(longstress_past3mths, na.rm = TRUE),
+    preg_stress_pastwk_max = max(longstress_pastweek, na.rm = TRUE),
+    preg_stress_pastmo_max = max(longstress_pastmonth, na.rm = TRUE),
+    preg_stress_past3mo_max = max(longstress_past3mths, na.rm = TRUE)
+  ) %>% 
+  mutate_at(
+    vars(preg_stress_pastwk_max:preg_stress_past3mo_max),
+    .funs = funs(if_else(. == -Inf, NA_real_, .))
+  )
+```
+
+```{r}
+m_means %>% 
+  dplyr::select(
+    preg_stress_pastwk_M:last_col()
+  ) %>% 
+  gather(key, value) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 1) +
+  facet_grid(.~key)
+```
+```{r}
+write_csv(m, "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/MoD_Pregnancy_Project/prenatal_stress_perceived_lf.csv")
+write_csv(m_means, "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/MoD_Pregnancy_Project/prenatal_stress_perceived.csv")
+```
+

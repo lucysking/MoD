@@ -1,25 +1,27 @@
-"0","```r
-# aggression
-itsea %>% 
-  dplyr::select(
-    itsea_a28, 
-    itsea_a30, 
-    itsea_a33, 
-    itsea_b3, 
-    itsea_b9, 
-    itsea_b16, 
-    itsea_b30, 
-    itsea_b34, 
-    itsea_b44, 
-    itsea_b88, 
-    -itsea_c2, 
-    -itsea_e4
-  ) %>%   
-  alpha()
-```"
+"0","# aggression"
+"0","itsea %>% "
+"0","  dplyr::select("
+"0","    itsea_a28, "
+"0","    itsea_a30, "
+"0","    itsea_a33, "
+"0","    itsea_b3, "
+"0","    itsea_b9, "
+"0","    itsea_b16, "
+"0","    itsea_b30, "
+"0","    itsea_b34, "
+"0","    itsea_b44, "
+"0","    itsea_b88, "
+"0","    -itsea_c2, "
+"0","    -itsea_e4"
+"0","  ) %>%   "
+"0","  alpha()"
 "1","
-Reliability analysis   
-Call: alpha(x = .)
-
- 
+Reliability analysis "
+"1"," "
+"1"," 
 "
+"1","Call: "
+"1","alpha(x = .)
+"
+"1","
+ "

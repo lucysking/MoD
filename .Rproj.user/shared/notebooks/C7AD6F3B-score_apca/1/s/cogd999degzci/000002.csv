@@ -1,8 +1,0 @@
-"0","# select names of severity ratings for events that could have occurred during pregnancy "
-"0","sev_preg <-"
-"0","  a %>% "
-"0","  select(ends_with(""_preg"")) %>% "
-"0","  rename_all("
-"0","    ~str_replace(., ""_preg"", ""_sev"")"
-"0","  ) %>% "
-"0","  names()"

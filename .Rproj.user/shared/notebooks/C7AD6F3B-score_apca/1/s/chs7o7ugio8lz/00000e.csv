@@ -1,3 +1,0 @@
-"0","a %>% "
-"0","  ggplot(aes(parent_sum_sev)) +"
-"0","  geom_histogram(binwidth = 5)"

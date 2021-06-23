@@ -1,20 +1,22 @@
-"0","```r
-# empathy
-itsea %>% 
-  dplyr::select(
-    itsea_a22, 
-    itsea_b51, 
-    itsea_b56, 
-    itsea_b57, 
-    itsea_b63, 
-    itsea_b73, 
-    itsea_c4
-  ) %>% 
-  alpha()
-```"
+"0","# empathy"
+"0","itsea %>% "
+"0","  dplyr::select("
+"0","    itsea_a22, "
+"0","    itsea_b51, "
+"0","    itsea_b56, "
+"0","    itsea_b57, "
+"0","    itsea_b63, "
+"0","    itsea_b73, "
+"0","    itsea_c4"
+"0","  ) %>% "
+"0","  alpha()"
 "1","
-Reliability analysis   
-Call: alpha(x = .)
-
- 
+Reliability analysis "
+"1"," "
+"1"," 
 "
+"1","Call: "
+"1","alpha(x = .)
+"
+"1","
+ "

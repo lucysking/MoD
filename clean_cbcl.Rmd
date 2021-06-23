@@ -16,6 +16,7 @@ cbcl_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBCL/preschool/ASEBA_R
 ```{r}
 d <-
   readxl::read_xlsx(cbcl_file)
+
 ```
 
 # Clean up file 
@@ -24,15 +25,20 @@ d <-
 ```{r}
 dc <-
   d %>% 
-  select(
+  dplyr::select(
     id = AssessedPersonId,
     date = DateOnForm,
     ends_with("_Total"),
+    ends_with("_TScore"),
     c15_prob_1:c15_prob_99,
     -Language_Development_Survey_Total:-Vocabulary_Score_for_30_35_months_Total
   ) %>% 
   rename_all(
     list(~str_to_lower(.))
+  ) %>% 
+  mutate_at(
+    vars(emotionally_reactive_total:oppositional_defiant_problems_total),
+    as.numeric
   )
 ```
 
