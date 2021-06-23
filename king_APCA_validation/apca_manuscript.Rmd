@@ -1,8 +1,11 @@
 ---
 title: "Analyses for __Shared worlds and shared consequences: Initial validation of the Assessment of Parent and Child Adversity (APCA)__ (King et al., 2021)"
-author: "Lucy King"
+author: "Lucy S. King"
 date: "5/14/2021"
-output: html_document
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
 ---
 
 # Environment
@@ -33,8 +36,6 @@ cbcl_file <- paste0(home, "CBCL/preschool/cbcl_preschool_cleaned_20210423.csv")
 ctq_file <- paste0(home, "CTQ/ctq_scored_20210512.csv")
 bces_file <- paste0(home, "BCES/bces_scored_20210512.csv")
 mod_bl_stress_file <- paste0(home, "MoD_Pregnancy_Project/baseline_stress_life_events.csv")
-mod_perceived_stress_file <- paste0(home, "MoD_Pregnancy_Project/prenatal_stress_perceived.csv")
-mod_perceived_stress_lf_file <- paste0(home, "MoD_Pregnancy_Project/prenatal_stress_perceived_lf.csv")
 
 source("winsorize.r")
 
@@ -69,8 +70,7 @@ d <-
   ) %>% 
   left_join(read_csv(ctq_file), by = "id") %>% 
   left_join(read_csv(bces_file), by = "id") %>% 
-  left_join(read_csv(mod_bl_stress_file), by = "id") %>% 
-  left_join(read_csv(mod_perceived_stress_file), by = "id") 
+  left_join(read_csv(mod_bl_stress_file), by = "id") 
 ```
 
 
@@ -1000,7 +1000,7 @@ df_new.1 <-
 # generate predicted values
 df_new.1$pred <-
   predict(
-    glm.2,
+    glm.4,
     df_new.1,
     type = "response"
   )
@@ -1371,7 +1371,6 @@ describe_posterior(ple_bai, ci = 0.95)$BF
 ```
 
 ### CBCL 
-
 
 #### Spearman's correlations
 ```{r}
