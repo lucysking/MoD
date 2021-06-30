@@ -1,5 +1,5 @@
 ---
-title: "Score affect"
+title: "Wrangle and summarize child observed affect during the Lab-TAB"
 output: html_notebook
 ---
 
@@ -12,7 +12,7 @@ file_origin <-
     full.names = TRUE
   )
 
-file_destination <- "~/Desktop/MoD/data/coding_files/"
+file_destination <- "~/Desktop/MoD/MoD_private/data/coding_files/"
 
 files <-
   list.files(
@@ -24,12 +24,15 @@ files <-
 
 file.copy(files, file_destination)
 ```
-
 # Environment set up
 ```{r}
 #Libraries
 library(tidyverse)
 library(psych)
+library(ggpubr)
+library(corrr)
+
+source("~/Desktop/MOD/MoD/winsorize.R")
 
 #Files
 affect_files  <-
@@ -42,6 +45,16 @@ affect_files  <-
       )
   )
 
+cbbPalette <- c(
+  "#000000", 
+  "#E69F00", 
+  "#56B4E9", 
+  "#009E73", 
+  "#F0E442", 
+  "#0072B2", 
+  "#D55E00", 
+  "#CC79A7"
+)
 ```
 
 # Read in data
@@ -54,38 +67,119 @@ affect_data <-
   unnest(data) %>% 
   mutate(
     ID = str_extract(path, "\\d{5}")
+  )
+
+```
+
+```{r}
+affect_data_cl <-
+  affect_data %>% 
+  mutate(
+    # merge variables with same meaning but different names
+    phase = case_when(
+      !is.na(episode_section.code01) ~ episode_section.code01,
+      !is.na(episode_segment.code01) ~ episode_segment.code01
+    ),
+    phase.onset = case_when(
+      !is.na(episode_section.onset) ~ episode_section.onset,
+      !is.na(episode_segment.onset) ~ episode_segment.onset
+    ),
+    phase.offset = case_when(
+      !is.na(episode_section.offset) ~ episode_section.offset,
+      !is.na(episode_segment.offset) ~ episode_segment.offset
+    )
   ) %>% 
   select(
     ID,
     episode = episode.code01,
     episode.onset,
     episode.offset,
-    phase = episode_section.code01,
-    phase.onset = episode_section.onset,
-    phase.offset = episode_section.offset,
+    phase,
+    phase.onset,
+    phase.offset,
     arousal.onset,
     arousal.offset,
-    arousal = arousal.code01,
+    arousal = arousal_s.code01,
     valence.onset,
     valence.offset,
     valence = valence.code01,
     valence_r.onset,
     valence_r.offset,
     valence_r = valence_r.code01,
-    arousal_r.onset,
-    arousal_r.offset,
-    arousal_r = arousal_r.code01,
     -path
   ) %>% 
   mutate(
+    # use regex to extract tidy info for phase variable
     phase = str_replace(phase, "^\\w+_", ""),
     phase = str_replace(phase, "^\\w+\\r_", ""),
-    phase = str_replace(phase, "^\\w+\\r\\r_", "")
-  ) %>% 
+    phase = str_replace(phase, "^\\w+\\r\\r_", ""),
+    arousal = str_replace(arousal, "^\\w+_\\w+-", ""),
+    # if missing arousal offset, use phase offset
+    arousal.offset = if_else(
+      is.na(arousal.offset) & !is.na(arousal), phase.offset, arousal.offset
+    ),
+    # fix errors in data entry
+    arousal = case_when(
+      phase == "Baseline- 0" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "Baseline- 0.5" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "Baseline- 1.5" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "Baseline- 2" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "Recovery- 0" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "Recovery- 1" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "	Stressor- 1" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "	Stressor- 0" ~ str_replace(phase, "^\\w+-", ""),
+      phase == "	Stressor- 2" ~ str_replace(phase, "^\\w+-", ""),
+      TRUE ~ arousal
+    ),
+    phase = case_when(
+      phase == "Baseline- 0.5" ~ "Baseline",
+      phase == "Baseline- 1.5" ~ "Baseline",
+      phase == "Baseline- 0" ~ "Baseline",
+      phase == "Baseline- 2" ~ "Baseline",
+      phase == "Stresor" ~ "Stressor",
+      phase == "PC\n_Recovery" ~ "Recovery",
+      phase == "Stressor- 1" ~ "Stressor",
+      phase == "Stressor- 0" ~ "Stressor",
+      phase == "Stressor- 2" ~ "Stressor",
+      phase == "Recovery- 0" ~ "Recovery",
+      phase == "Recovery- 1" ~ "Recovery",
+      phase == "SM\n_Baseline" ~ "Baseline",
+      phase == "SM\n_Recovery" ~ "Recovery",
+      phase == "SM\n_Stressor" ~ "Stressor",
+      phase == "Basline" ~ "Baseline",
+      phase == "B\n_Baseline" ~ "Baseline",
+      TRUE ~ phase
+    )
+  ) %>%
   mutate_at(
     vars(ID, ends_with("set"), ends_with("_r"), valence, arousal),
     as.double
-  )
+  ) %>% 
+  # remove data not nested within an episode or phase
+  # remove ID 10046 due to improper camera angle
+  filter(!is.na(episode), !is.na(phase), ID != 10046)
+```
+
+# Number of individuals and observations
+10046 missing because of improper camera angle.
+10717 and 10718 missing SM b/c child too distressed prior to start. 
+
+```{r}
+affect_data_cl %>% 
+  distinct(ID)
+```
+
+```{r}
+affect_data_cl %>% 
+  distinct(ID, episode) %>% 
+  count(episode)
+```
+
+
+```{r}
+affect_data_cl %>% 
+  distinct(ID, episode, phase) %>% 
+  count(episode, phase)
 ```
 
 # Score valence
@@ -97,8 +191,24 @@ affect_data <-
 
 ```{r}
 valence_data <-
-  affect_data %>% 
-  filter(!is.na(episode), !is.na(phase), !is.na(valence)) %>% 
+  affect_data_cl %>% 
+  mutate(
+    valence.onset = case_when(
+      is.na(valence.onset) & !is.na(valence_r.onset) ~ valence_r.onset,
+      !is.na(valence.onset) & is.na(valence_r.onset) ~ valence.onset,
+      TRUE ~ valence.onset
+    ),
+    valence.offset = case_when(
+      is.na(valence.offset) & !is.na(valence_r.offset) ~ valence_r.offset,
+      !is.na(valence.offset) & is.na(valence_r.offset) ~ valence.offset,
+      TRUE ~ valence.offset
+    ),
+    valence = case_when(
+      is.na(valence) & !is.na(valence_r) ~ valence_r,
+      !is.na(valence) & is.na(valence_r) ~ valence,
+      TRUE ~ valence
+    )
+  ) %>% 
   select(
     ID,
     episode,
@@ -149,76 +259,532 @@ valence_data <-
   )
 ```
 
-# Visualize valence data
+# Score arousal
+### Arousal is coded as single score for entire phase; simply tidy data
 ```{r}
-valence_data %>% 
-  group_by(episode, phase) %>% 
-  summarise(
-    n = n(),
-    mean = mean(valence, na.rm = TRUE),
-    sd = sd(valence, na.rm = TRUE),
-    se = sd / sqrt(n),
-    min = mean - se,
-    max = mean + se
+arousal_data <- 
+  affect_data_cl %>% 
+  filter(!is.na(arousal)) %>% 
+  select(
+    ID,
+    episode,
+    phase,
+    phase.onset,
+    phase.offset,
+    arousal
   ) %>% 
-  ggplot(aes(episode, mean, fill = phase)) +
-  geom_col(position = "dodge") +
-  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
-  labs(
-    y = "Mean valence"
-  )
+  distinct(ID, episode, phase, .keep_all = TRUE)
+```
 
-valence_data %>% 
-  filter(episode != "B") %>% 
-  group_by(episode, phase) %>% 
-  summarise(
-    n = n(),
-    mean = mean(valence, na.rm = TRUE),
-    sd = sd(valence, na.rm = TRUE),
-    se = sd / sqrt(n),
-    min = mean - se,
-    max = mean + se
-  ) %>% 
-  ggplot(aes(episode, mean, fill = phase)) +
-  geom_col(position = "dodge") +
-  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
-  labs(
-    y = "Mean valence"
-  )
-
-valence_data %>% 
-  ggplot(aes(episode, valence, fill = phase)) +
-  geom_boxplot()
-
-valence_data %>% 
-  ggplot(aes(valence, fill = phase)) +
-  geom_density(alpha = 1/2) +
-  facet_wrap(.~episode, scale = "free")
-
-valence_data %>% 
-  filter(episode != "B") %>% 
+# Merge scored and tidied valence and arousal data
+```{r}
+ad <-
+  valence_data %>% 
+  left_join(arousal_data, by = c("ID", "episode", "phase")) %>% 
   mutate(
     episode = factor(
       episode,
-      levels = c("PC", "NSL", "SM"),
-      labels = c("Frustration", "Sadness", "Fear")
-    )
+      levels = c("B", "PC", "NSL", "SM")
+    ),
+    phase = factor(
+      phase,
+      levels = c("Baseline", "Stressor", "Recovery")
+    ),
+    # standardize scores
+    valence_z = scale(valence, scale = TRUE),
+    arousal_z = scale(arousal, scale = TRUE),
+    phase_duration = (phase.offset - phase.onset) / 1000
+  )  %>% 
+  group_by(ID, episode) %>% 
+  mutate(
+    episode_duration = sum(phase_duration, na.rm = TRUE)
   ) %>% 
+  ungroup() %>% 
+  dplyr::select(-phase.onset, -phase.offset)
+```
+
+# Histograms
+
+### Durations
+Checked outlier for scary mask duration. Child explored mask in recovery phase for a long time.
+```{r}
+ad %>% 
+  ggplot(aes(phase_duration, fill = phase)) +
+  geom_histogram() +
+  facet_wrap(.~episode, scales = "free")
+```
+
+### Valence
+```{r}
+ad %>% 
+  ggplot(aes(valence_z, fill = phase)) +
+  geom_histogram(binwidth = .25) +
+  facet_wrap(.~episode, scales = "free")
+
+ad %>% 
+  ggplot(aes(valence_z, fill = phase)) +
+  geom_density(alpha = 1/2) +
+  facet_wrap(.~episode, scales = "free")
+```
+### Arousal
+```{r}
+ad %>% 
+  ggplot(aes(arousal, fill = phase)) +
+  geom_histogram(binwidth = .5) +
+  facet_wrap(.~episode, scales = "free")
+
+ad %>% 
+  ggplot(aes(arousal, fill = phase)) +
+  geom_density(alpha = 1/2) +
+  facet_wrap(.~episode, scales = "free")
+```
+# Winsorize outliers
+```{r}
+ad <-
+  ad %>% 
+  mutate(
+    valence = winsorize(valence, product = 3),
+    valence_z = winsorize(valence_z, product = 3)
+  )
+```
+
+# Create wide format version of data
+```{r}
+ad_wf_EP <-
+  ad %>% 
+  dplyr::select(
+    ID, 
+    episode, 
+    phase,
+    phase_duration,
+    episode_duration,
+    valence_z, 
+    arousal
+  ) %>% 
+  pivot_wider(
+    names_from = c(episode, phase),
+    values_from = c(phase_duration:arousal)
+  )
+
+ad_wf_E <- 
+  ad %>% 
+  group_by(ID, episode) %>% 
+  summarise_at(
+    vars(valence:last_col()),
+    funs(mean), na.rm = TRUE
+  ) %>% 
+  dplyr::select(
+    ID, 
+    episode, 
+    episode_duration,
+    valence_z, 
+    arousal
+  ) %>% 
+  pivot_wider(
+    names_from = c(episode),
+    values_from = c(episode_duration:arousal)
+  ) %>% 
+  ungroup()
+```
+
+# Correlations
+
+## Everything
+```{r}
+ad_corrr <- 
+  ad_wf_EP %>% 
+  dplyr::select(valence_z_NSL_Baseline: last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion()
+
+ad_corrr
+```
+
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(valence_z_NSL_Baseline: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", "_"))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_all_corr.png",
+  dpi = 500,
+  height = 6,
+  width = 8.5
+)
+```
+
+
+## On average across episodes
+```{r}
+ad_wf_E %>% 
+  dplyr::select(valence_z_B:last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion()
+```
+
+```{r}
+ad_wf_E %>% 
+  dplyr::select(valence_z_B: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", "_"))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_mean_episode_corr.png",
+  dpi = 500,
+  height = 6,
+  width = 8.5
+)
+```
+  
+## At baseline
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Baseline")) %>% 
+  dplyr::select(valence_z_Baseline_NSL: last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion()
+```
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Baseline")) %>% 
+  dplyr::select(valence_z_NSL_Baseline: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", ""))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_baseline_corr.png",
+  dpi = 500,
+  height = 6,
+  width = 8.5
+)
+```
+
+
+## At stressor
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Stressor")) %>% 
+  dplyr::select(valence_z_Stressor_NSL: last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion() 
+```
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Stressor")) %>% 
+  dplyr::select(valence_z_NSL_Stressor: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", ""))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_stressor_corr.png",
+  dpi = 500,
+  height = 6,
+  width = 8.5
+)
+```
+
+
+## At recovery
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Recovery")) %>% 
+  dplyr::select(valence_z_Recovery_NSL: last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion() 
+```
+
+```{r}
+ad_wf_EP %>% 
+  dplyr::select(contains("Recovery")) %>% 
+  dplyr::select(valence_z_NSL_Recovery: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", ""))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_recovery_corr.png",
+  dpi = 500,
+  height = 6,
+  width = 8.5
+)
+```
+
+# Visualize 
+
+### Summarize means, SEs
+```{r}
+labtab_summary_E <-
+  ad %>% 
+  group_by(episode) %>% 
+  summarise(
+    n = n(),
+    Valence = mean(valence_z, na.rm = TRUE),
+    valence_sd = sd(valence_z, na.rm = TRUE),
+    valence_se = valence_sd / sqrt(n),
+    Arousal = mean(arousal, na.rm = TRUE),
+    arousal_sd = sd(arousal, na.rm = TRUE),
+    arousal_se = arousal_sd / sqrt(n)
+  )
+
+labtab_summary_EP <-
+  ad %>% 
   group_by(episode, phase) %>% 
   summarise(
     n = n(),
-    mean = mean(valence, na.rm = TRUE),
-    sd = sd(valence, na.rm = TRUE),
-    se = sd / sqrt(n),
-    min = mean - se,
-    max = mean + se
-  ) %>% 
-  ggplot(aes(episode, mean, fill = phase)) +
-  geom_col(position = "dodge") +
-  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
-  labs(
-    y = "Mean valence"
+    Valence = mean(valence_z, na.rm = TRUE),
+    valence_sd = sd(valence_z, na.rm = TRUE),
+    valence_se = valence_sd / sqrt(n),
+    Arousal = mean(arousal, na.rm = TRUE),
+    arousal_sd = sd(arousal, na.rm = TRUE),
+    arousal_se = arousal_sd / sqrt(n)
   )
+```
+
+
+### Valence x arousal
+```{r}
+ad %>% 
+  ggplot(aes(valence, arousal, color = phase)) +
+  geom_jitter() +
+  geom_smooth(method = "lm") +
+  facet_wrap(.~episode, scales = "free")
+```
+
+### Valence by phase and episode
+```{r}
+labtab_summary_EP %>% 
+  filter(episode != "B") %>% 
+  ggplot(aes(phase, Valence, color = episode, shape = episode)) +
+  geom_pointrange(
+    aes(ymin = Valence - valence_se, ymax = Valence + valence_se),
+    size = 1.25
+  ) +
+  geom_line(aes(group = episode), size = 2, show.legend = FALSE) +
+  scale_colour_manual(
+    name = "Episode",
+    values=cbbPalette
+  ) +
+  scale_shape_manual(
+     name = "Episode",
+     values = c(16, 17, 15)
+  ) +
+  scale_y_continuous(breaks = seq.int(-.4, .4, .1)) +
+  theme_pubr() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.y = element_text(size = 16),
+    axis.text.x = element_text(size = 16),
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16),
+    legend.position = "right"
+  ) +
+  labs(
+    x = NULL,
+    y = "Valence",
+    color = NULL,
+    shape = NULL
+  )
+```
+
+### Valence by episode
+```{r}
+labtab_summary_E %>% 
+  filter(episode != "B") %>% 
+  ggplot(aes(episode, Valence)) +
+  geom_pointrange(
+    aes(ymin = Valence - valence_se, ymax = Valence + valence_se),
+    size = 1.25
+  ) +
+  geom_line(aes(group = 1), size = 2, show.legend = FALSE) +
+  scale_y_continuous(breaks = seq.int(-.2, .10, .03)) +
+  theme_pubr() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.y = element_text(size = 16),
+    axis.text.x = element_text(size = 16),
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16),
+    legend.position = "right"
+  ) +
+  labs(
+    x = NULL,
+    y = "Valence",
+    color = NULL,
+    shape = NULL
+  )
+```
+
+### Arousal by phase and episode
+```{r}
+labtab_summary_EP %>% 
+  filter(episode != "B") %>% 
+  ggplot(aes(phase, Arousal, color = episode, shape = episode)) +
+  geom_pointrange(
+    aes(ymin = Arousal - arousal_se, ymax = Arousal + arousal_se),
+    size = 1.25
+  ) +
+  geom_line(aes(group = episode), size = 2, show.legend = FALSE) +
+  scale_colour_manual(
+    name = "Episode",
+    values=cbbPalette
+  ) +
+  scale_shape_manual(
+     name = "Episode",
+     values = c(16, 17, 15)
+  ) +
+  scale_y_continuous(breaks = seq.int(-1, 1, .1)) +
+  theme_pubr() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.y = element_text(size = 16),
+    axis.text.x = element_text(size = 16),
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16),
+    legend.position = "right"
+  ) +
+  labs(
+    x = NULL,
+    y = "Arousal",
+    color = NULL,
+    shape = NULL
+  )
+
+mean(affect_data_cl$valence, na.rm = TRUE)
+```
+
+### Arousal by episode
+```{r}
+labtab_summary_E %>% 
+  filter(episode != "B") %>% 
+  ggplot(aes(episode, Arousal)) +
+  geom_pointrange(
+    aes(ymin = Arousal - arousal_se, ymax = Arousal + arousal_se),
+    size = 1.25
+  ) +
+  geom_line(aes(group = 1), size = 2, show.legend = FALSE) +
+  scale_y_continuous(breaks = seq.int(.4, .8, .05)) +
+  theme_pubr() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.y = element_text(size = 16),
+    axis.text.x = element_text(size = 16),
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16),
+    legend.position = "right"
+  ) +
+  labs(
+    x = NULL,
+    y = "Arousal",
+    color = NULL,
+    shape = NULL
+  )
+```
+
+## Arousal and valence by phase by episode
+
+```{r}
+labtab_summary_EP_lf <- 
+  ad %>% 
+  dplyr::select(
+    episode,
+    phase, 
+    valence_z,
+    arousal_z
+  ) %>% 
+  pivot_longer(
+    cols = valence_z:arousal_z,
+    names_to = "dimension"
+  ) %>% 
+  group_by(episode, phase, dimension) %>% 
+  summarise(
+    n = n(),
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    se = sd / sqrt(n),
+  )
+```
+```{r}
+labtab_summary_EP_lf %>% 
+  filter(episode != "B") %>% 
+  ggplot(aes(phase, mean, color = dimension, shape = dimension)) +
+  geom_pointrange(
+    aes(ymin = mean - se, ymax = mean + se),
+    size = 1
+  ) +
+  geom_line(aes(group = dimension), size = 2, show.legend = FALSE) +
+  scale_colour_manual(
+    name = "Dimension",
+    values=cbbPalette
+  ) +
+  scale_shape_manual(
+     name = "Dimension",
+     values = c(16, 17, 15)
+  ) +
+  scale_y_continuous(breaks = seq.int(-1, .5, .25)) +
+  theme_pubr() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20),
+    axis.text.y = element_text(size = 16),
+    axis.text.x = element_text(size = 16, angle = 320, hjust = .1),
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16),
+    legend.position = "right"
+  ) +
+  labs(
+    x = NULL,
+    y = "Mean affect value\n(standardized)",
+    color = NULL,
+    shape = NULL
+  ) +
+  facet_grid(.~episode)
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_affect_grid.png",
+  dpi = 500,
+  height = 6,
+  width = 10
+)
 ```
 
 ## Calculate reliability for valence
@@ -297,149 +863,3 @@ valence_data_r %>%
 ```
 
 
-# Score arousal
-
-```{r}
-arousal_data <-
-  affect_data %>% 
-  filter(!is.na(episode), !is.na(phase), !is.na(arousal)) %>% 
-  select(
-    ID,
-    episode,
-    phase,
-    phase.onset,
-    phase.offset,
-    arousal.onset,
-    arousal.offset,
-    arousal
-  ) %>% 
-  group_by(ID, episode, phase) %>% 
-  mutate(
-    phase_dur = (phase.offset - phase.onset) / 1000,
-    arousal_dur = (arousal.offset - arousal.onset) / 1000,
-    arousal_prop = arousal_dur / phase_dur
-  ) %>% 
-  ungroup() %>% 
-  distinct(ID, episode, phase, arousal_dur, arousal, arousal_prop) %>% 
-  group_by(ID, episode, phase, arousal) %>% 
-  summarise(
-    prop = mean(arousal_prop, na.rm = TRUE)
-  ) %>% 
-  ungroup()
-```
-
-```{r}
-arousal_data <-
-  arousal_data %>% 
-  filter(arousal != 999) %>% 
-  mutate(
-    arousal_product = prop * arousal
-  ) %>% 
-  group_by(ID, episode, phase) %>% 
-  summarise(
-    arousal = sum(arousal_product, na.rm = TRUE)
-  )
-```
-
-# Visualize arousal data
-```{r}
-arousal_data %>% 
-  group_by(episode, phase) %>% 
-  summarise(
-    n = n(),
-    mean = mean(arousal, na.rm = TRUE),
-    sd = sd(arousal, na.rm = TRUE),
-    se = sd / sqrt(n),
-    min = mean - se,
-    max = mean + se
-  ) %>% 
-  ggplot(aes(episode, mean, fill = phase)) +
-  geom_col(position = "dodge") +
-  geom_errorbar(aes(ymin = min, ymax = max), position = "dodge") +
-  labs(
-    y = "Mean arousal"
-  )
-
-arousal_data %>% 
-  ggplot(aes(episode, arousal, fill = phase)) +
-  geom_boxplot()
-```
-
-## Calculate reliability for arousal
-```{r}
-arousal_data_r <-
-  affect_data %>% 
-  filter(!is.na(episode), !is.na(phase), !is.na(arousal_r), arousal_r != 999) %>% 
-  select(
-    ID,
-    episode,
-    phase,
-    phase.onset,
-    phase.offset,
-    arousal_r.onset,
-    arousal_r.offset,
-    arousal_r
-  ) %>% 
-  group_by(ID, episode, phase) %>% 
-  mutate(
-    phase_dur = (phase.offset - phase.onset) / 1000,
-    arousal_r_dur = (arousal_r.offset - arousal_r.onset) / 1000,
-    arousal_r_prop = arousal_r_dur / phase_dur
-  ) %>% 
-  ungroup() %>% 
-  distinct(ID, episode, phase, arousal_r_dur, arousal_r, arousal_r_prop) %>% 
-  group_by(ID, episode, phase, arousal_r) %>% 
-  summarise(
-    prop_r = mean(arousal_r_prop, na.rm = TRUE)
-  ) %>% 
-  mutate(
-    arousal_r_product = prop_r * arousal_r
-  ) %>% 
-  group_by(ID, episode, phase) %>% 
-  summarise(
-    arousal_r = sum(arousal_r_product, na.rm = TRUE)
-  ) %>% 
-  ungroup()
-```
-
-```{r}
-arousal_data_r <-
-  arousal_data_r %>% 
-  select(ID:phase, arousal_r) %>% 
-  left_join(
-    arousal_data %>% 
-      select(ID:phase, arousal),
-    by = c("ID", "episode", "phase")
-  ) %>% 
-  mutate(
-    diff = arousal - arousal_r,
-    arousal_f = as.factor(
-      case_when(
-        arousal == 0 ~ "neutral",
-        arousal > 0 ~ "positive",
-        arousal < 0 ~ "negative"
-      )
-    ),
-    arousal_r_f = as.factor(
-      case_when(
-        arousal_r == 0 ~ "neutral",
-        arousal_r > 0 ~ "positive",
-        arousal_r < 0 ~ "negative"
-      )
-    )
-  )
-
-arousal_data_r %>% 
-  select(arousal, arousal_r) %>% 
-  ICC()
-
-arousal_data_r %>% 
-  select(arousal_f, arousal_r_f) %>% 
-  na.omit %>%
-  table() %>% 
-  cohen.kappa()
-
-arousal_data_r %>% 
-  count(diff < 0)
-```
-  
