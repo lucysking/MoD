@@ -132,7 +132,7 @@ p1 %>%
 ```
 # Export
 ```{r}
-write_csv(p1, paste0(home, "Inflammation/olink_january_2021/protemoic_data_formatted.csv"))
+write_csv(p1, paste0(home, "Inflammation/olink_january_2021/proteomic_data_formatted.csv"))
 ```
 
 

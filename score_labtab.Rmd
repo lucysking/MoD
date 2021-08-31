@@ -31,6 +31,7 @@ library(tidyverse)
 library(psych)
 library(ggpubr)
 library(corrr)
+library(ggcorrplot)
 
 source("~/Desktop/MOD/MoD/winsorize.R")
 
@@ -44,6 +45,8 @@ affect_files  <-
         full.names = TRUE
       )
   )
+
+cbq_file <- paste0("~/Box/Mooddata_Coordinating/MOD/Data/REDCap/CBQ/cbq_cbqem_total_scores_20210322.csv")
 
 cbbPalette <- c(
   "#000000", 
@@ -90,7 +93,7 @@ affect_data_cl <-
     )
   ) %>% 
   select(
-    ID,
+    id = ID,
     episode = episode.code01,
     episode.onset,
     episode.offset,
@@ -152,12 +155,12 @@ affect_data_cl <-
     )
   ) %>%
   mutate_at(
-    vars(ID, ends_with("set"), ends_with("_r"), valence, arousal),
+    vars(id, ends_with("set"), ends_with("_r"), valence, arousal),
     as.double
   ) %>% 
   # remove data not nested within an episode or phase
   # remove ID 10046 due to improper camera angle
-  filter(!is.na(episode), !is.na(phase), ID != 10046)
+  filter(!is.na(episode), !is.na(phase), id != 10046)
 ```
 
 # Number of individuals and observations
@@ -166,19 +169,19 @@ affect_data_cl <-
 
 ```{r}
 affect_data_cl %>% 
-  distinct(ID)
+  distinct(id)
 ```
 
 ```{r}
 affect_data_cl %>% 
-  distinct(ID, episode) %>% 
+  distinct(id, episode) %>% 
   count(episode)
 ```
 
 
 ```{r}
 affect_data_cl %>% 
-  distinct(ID, episode, phase) %>% 
+  distinct(id, episode, phase) %>% 
   count(episode, phase)
 ```
 
@@ -210,7 +213,7 @@ valence_data <-
     )
   ) %>% 
   select(
-    ID,
+    id,
     episode,
     phase,
     phase.onset,
@@ -219,15 +222,15 @@ valence_data <-
     valence.offset,
     valence
   ) %>% 
-  group_by(ID, episode, phase) %>% 
+  group_by(id, episode, phase) %>% 
   mutate(
     phase_dur = (phase.offset - phase.onset) / 1000,
     valence_dur = (valence.offset - valence.onset) / 1000,
     valence_prop = valence_dur / phase_dur
   ) %>% 
   ungroup() %>% 
-  distinct(ID, episode, phase, valence_dur, valence, valence_prop) %>% 
-  group_by(ID, episode, phase, valence) %>% 
+  distinct(id, episode, phase, valence_dur, valence, valence_prop) %>% 
+  group_by(id, episode, phase, valence) %>% 
   summarise(
     prop = mean(valence_prop, na.rm = TRUE)
   ) %>% 
@@ -242,7 +245,7 @@ valence_data <-
   mutate(
     valence_product = prop * valence
   ) %>% 
-  group_by(ID, episode, phase) %>% 
+  group_by(id, episode, phase) %>% 
   summarise(
     valence = sum(valence_product, na.rm = TRUE)
   ) %>% 
@@ -266,21 +269,21 @@ arousal_data <-
   affect_data_cl %>% 
   filter(!is.na(arousal)) %>% 
   select(
-    ID,
+    id,
     episode,
     phase,
     phase.onset,
     phase.offset,
     arousal
   ) %>% 
-  distinct(ID, episode, phase, .keep_all = TRUE)
+  distinct(id, episode, phase, .keep_all = TRUE)
 ```
 
 # Merge scored and tidied valence and arousal data
 ```{r}
 ad <-
   valence_data %>% 
-  left_join(arousal_data, by = c("ID", "episode", "phase")) %>% 
+  left_join(arousal_data, by = c("id", "episode", "phase")) %>% 
   mutate(
     episode = factor(
       episode,
@@ -295,7 +298,7 @@ ad <-
     arousal_z = scale(arousal, scale = TRUE),
     phase_duration = (phase.offset - phase.onset) / 1000
   )  %>% 
-  group_by(ID, episode) %>% 
+  group_by(id, episode) %>% 
   mutate(
     episode_duration = sum(phase_duration, na.rm = TRUE)
   ) %>% 
@@ -353,28 +356,28 @@ ad <-
 ad_wf_EP <-
   ad %>% 
   dplyr::select(
-    ID, 
+    id, 
     episode, 
     phase,
     phase_duration,
     episode_duration,
     valence_z, 
-    arousal
+    arousal_z
   ) %>% 
   pivot_wider(
     names_from = c(episode, phase),
-    values_from = c(phase_duration:arousal)
+    values_from = c(phase_duration:arousal_z)
   )
 
 ad_wf_E <- 
   ad %>% 
-  group_by(ID, episode) %>% 
+  group_by(id, episode) %>% 
   summarise_at(
     vars(valence:last_col()),
     funs(mean), na.rm = TRUE
   ) %>% 
   dplyr::select(
-    ID, 
+    id, 
     episode, 
     episode_duration,
     valence_z, 
@@ -458,6 +461,7 @@ ad_wf_EP %>%
   shave() %>% 
   fashion()
 ```
+
 ```{r}
 ad_wf_EP %>% 
   dplyr::select(contains("Baseline")) %>% 
@@ -538,6 +542,46 @@ ggsave(
   height = 6,
   width = 8.5
 )
+```
+## With parent-reported tempermament (CBQ)
+
+### all subscales
+```{r}
+ad_wf_EP %>% 
+  left_join(read_csv(cbq_file), by = "id") %>% 
+  dplyr::select(valence_z_NSL_Baseline: last_col()) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion()
+```
+```{r}
+ad_wf_EP %>% 
+  left_join(read_csv(cbq_file), by = "id") %>% 
+  dplyr::select(valence_z_NSL_Baseline: last_col()) %>% 
+  rename_at(
+    vars(contains("_z_")),
+    funs(str_replace(., "_z_", "_"))
+  ) %>% 
+  na.omit() %>% 
+  cor() %>% 
+  ggcorrplot(outline.color = "white", type = "lower")
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/temperament/figures/labtab_cbq_all_corr.png",
+  dpi = 500,
+  height = 10,
+  width = 12
+)
+```
+
+### negative affectivity`
+```{r}
+ad_wf_EP %>% 
+  left_join(read_csv(cbq_file), by = "id") %>% 
+  dplyr::select(valence_z_NSL_Baseline: arousal_z_SM_Stressor, cbq_negativeaff) %>% 
+  correlate() %>% 
+  shave() %>% 
+  fashion()
 ```
 
 # Visualize 
@@ -787,13 +831,31 @@ ggsave(
 )
 ```
 
-## Calculate reliability for valence
+# Reliability
+
+## Score second coder valence
 ```{r}
 valence_data_r <-
-  affect_data %>% 
-  filter(!is.na(episode), !is.na(phase), !is.na(valence_r), valence_r != 999) %>% 
+  affect_data_cl %>% 
+  mutate(
+    valence_r.onset = case_when(
+      is.na(valence.onset) & !is.na(valence_r.onset) ~ NA_real_,
+      !is.na(valence.onset) & is.na(valence_r.onset) ~ NA_real_,
+      TRUE ~ valence_r.onset
+    ),
+    valence_r.offset = case_when(
+      is.na(valence.offset) & !is.na(valence_r.offset) ~ NA_real_,
+      !is.na(valence.offset) & is.na(valence_r.offset) ~ NA_real_,
+      TRUE ~ valence_r.offset
+    ),
+    valence_r = case_when(
+      is.na(valence) & !is.na(valence_r) ~ NA_real_,
+      !is.na(valence) & is.na(valence_r) ~ NA_real_,
+      TRUE ~ valence_r
+    )
+  ) %>% 
   select(
-    ID,
+    id,
     episode,
     phase,
     phase.onset,
@@ -802,64 +864,59 @@ valence_data_r <-
     valence_r.offset,
     valence_r
   ) %>% 
-  group_by(ID, episode, phase) %>% 
+  group_by(id, episode, phase) %>% 
   mutate(
-    phase_dur = (phase.offset - phase.onset) / 1000,
+    phase_r_dur = (phase.offset - phase.onset) / 1000,
     valence_r_dur = (valence_r.offset - valence_r.onset) / 1000,
-    valence_r_prop = valence_r_dur / phase_dur
+    valence_r_prop = valence_r_dur / phase_r_dur
   ) %>% 
   ungroup() %>% 
-  distinct(ID, episode, phase, valence_r_dur, valence_r, valence_r_prop) %>% 
-  group_by(ID, episode, phase, valence_r) %>% 
+  distinct(id, episode, phase, valence_r_dur, valence_r, valence_r_prop) %>% 
+  group_by(id, episode, phase, valence_r) %>% 
   summarise(
     prop_r = mean(valence_r_prop, na.rm = TRUE)
   ) %>% 
-  mutate(
-    valence_r_product = prop_r * valence_r
-  ) %>% 
-  group_by(ID, episode, phase) %>% 
-  summarise(
-    valence_r = sum(valence_r_product, na.rm = TRUE)
-  ) %>% 
   ungroup()
 ```
-
+  
 ```{r}
 valence_data_r <-
   valence_data_r %>% 
-  select(ID:phase, valence_r) %>% 
-  left_join(
-    valence_data %>% 
-      select(ID:phase, valence),
-    by = c("ID", "episode", "phase")
-  ) %>% 
+  filter(valence_r != 999) %>% 
   mutate(
-    diff = valence - valence_r,
-    valence_f = as.factor(
-      case_when(
-        valence == 0 ~ "neutral",
-        valence > 0 ~ "positive",
-        valence < 0 ~ "negative"
-      )
+    valence_product_r = prop_r * valence_r
+  ) %>% 
+  group_by(id, episode, phase) %>% 
+  summarise(
+    valence_r = sum(valence_product_r, na.rm = TRUE)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    episode = fct_relevel(
+      episode,
+      "PC", "NSL", "B", "SM"
     ),
-    valence_r_f = as.factor(
-      case_when(
-        valence_r == 0 ~ "neutral",
-        valence_r > 0 ~ "positive",
-        valence_r < 0 ~ "negative"
-      )
+    phase = fct_relevel(
+      phase,
+      "Baseline", "Stressor", "Recovery"
     )
   )
+```  
 
-valence_data_r %>% 
-  select(valence, valence_r) %>% 
-  ICC()
-
-valence_data_r %>% 
-  select(valence_f, valence_r_f) %>% 
-  na.omit %>%
-  table() %>% 
-  cohen.kappa()
+## coder ICC for valence
+```{r}
+valence_data %>% 
+  left_join(valence_data_r, by = c("id", "episode", "phase")) %>% 
+  dplyr::select(
+    valence,
+    valence_r
+  ) %>% 
+  psych::ICC()
 ```
 
+# Export data
+```{r}
+write_csv(ad_wf_EP, "~/Box/Mooddata_Coordinating/MOD/Data/Behavioral/labtab_cleaned_wf_20210712.csv")
+write_csv(ad, "~/Box/Mooddata_Coordinating/MOD/Data/Behavioral/labtab_cleaned_lf_20210708.csv")
+```
 
