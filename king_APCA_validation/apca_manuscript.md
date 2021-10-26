@@ -1,3 +1,8 @@
+Analyses for Validation of the Assessment of Parent and Child Adversity
+(APCA) in Mothers and Young Children
+================
+Lucy S. King
+10/26/2021
 
 -   [Environment](#environment)
 -   [Read in data](#read-in-data)
@@ -13,17 +18,6 @@
 -   [Primary statistical analyses](#primary-statistical-analyses)
     -   [Convergent validity](#convergent-validity)
     -   [Criterion validity](#criterion-validity)
-
-|                                                                                        |
-|----------------------------------------------------------------------------------------|
-| title: "Analyses for Validation of the Assessment of Parent and Child Adversity (APCA) |
-| in Mothers and Young Children (King et al., 2021)"                                     |
-| author: “Lucy S. King”                                                                 |
-| date: “5/14/2021”                                                                      |
-| output:                                                                                |
-| github\_document:                                                                      |
-| toc: true                                                                              |
-| toc\_depth: 2                                                                          |
 
 # Environment
 
