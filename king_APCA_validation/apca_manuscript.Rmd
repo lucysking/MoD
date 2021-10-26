@@ -1,5 +1,6 @@
 ---
-title: "Analyses for __Shared worlds and shared consequences: Initial validation of the Assessment of Parent and Child Adversity (APCA)__ (King et al., 2021)"
+title: "Analyses for Validation of the Assessment of Parent and Child Adversity (APCA) 
+in Mothers and Young Children (King et al., 2021)"
 author: "Lucy S. King"
 date: "5/14/2021"
 output: 
@@ -14,12 +15,8 @@ library(tidyverse)
 library(corrr)
 library(performance)
 library(parameters)
-library(effectsize)
-library(boot)
-library(pscl)
 library(ggpubr)
 library(see)
-library(msm)
 library(facetscales)
 library(DescTools)
 library(gridExtra)
@@ -54,6 +51,7 @@ theme_mod <-
   )
 
 options(scipen = 999)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
 # Read in data
@@ -149,12 +147,6 @@ df %>%
   dplyr::select(ctq_1:ctq_25) %>% 
   psych::alpha()
 ```
-```{r}
-# BCES
-df %>% 
-  dplyr::select(bce_1:bce_10) %>% 
-  psych::alpha()
-```
 
 ```{r}
 # CESD
@@ -168,6 +160,7 @@ df %>%
   mutate(per = n / sum(n))
 
 ```
+
 ```{r}
 # BAI
 df %>% 
@@ -208,6 +201,7 @@ df %>%
 df %>% 
   summarise_at(
     vars(
+      parent_num_types,
       parent_num_childhood,
       parent_num_precon,
       preg_num_types,
@@ -224,16 +218,10 @@ df %>%
   summarise_at(
     vars(
       ctq_total, 
+      prenatal_life_events,
       bces_total,
       cesd_total, 
       bai_total,
-      total_problems_total,
-      parent_num_childhood,
-      parent_num_precon,
-      preg_num_types,
-      since_child_num_types, 
-      child_num_wit_types,
-      child_num_dir_types
     ),
     funs(mean, sd, min, max), na.rm = TRUE
   )
@@ -275,10 +263,11 @@ plot_histogram <- function(x) {
 }
 ```
 
-```{r}
+```{r fig.height=3, fig.width=4}
 continuous_vars <- 
   df %>% 
   dplyr::select(
+    parent_num_types,
     parent_num_childhood,
     parent_num_precon,
     preg_num_types,
@@ -296,8 +285,64 @@ continuous_vars <-
 
 histograms_continuous <- map(continuous_vars, ~plot_histogram(.x))
 histograms_continuous
-
 ```
+
+```{r fig.width=15, fig.height=12}
+df %>% 
+  dplyr::select(
+    `Maternal childhood adversity` = parent_num_childhood,
+    `Preconception adversity` = parent_num_precon,
+    `Prenatal adversity` = preg_num_types,
+    `Maternal adversity since birth` = since_child_num_types, 
+    `Maternal cumulative adversity` = parent_num_types,
+    `Child witnessed adversity` = child_num_wit_types,
+    `Child direct adversity` = child_num_dir_types,
+    `CTQ-SF total score` = ctq_total, 
+    `DQAQ-SPF maternal adversity` = prenatal_life_events,
+    `BCEs total score` = bces_total,
+    `CES-D total score` = cesd_total, 
+    `BAI total score` = bai_total,
+    `CBCL total problems score` = total_problems_total
+  ) %>% 
+  pivot_longer(
+    everything()
+  ) %>% 
+  mutate(
+    name = factor(
+      name,
+      levels = c(
+        "Maternal childhood adversity",
+        "Preconception adversity",
+        "Prenatal adversity",
+        "Maternal adversity since birth",
+        "Maternal cumulative adversity",
+        "Child witnessed adversity",
+        "Child direct adversity",
+        "CTQ-SF total score",
+        "DQAQ-SPF maternal adversity",
+        "BCEs total score",
+        "CES-D total score",
+        "BAI total score",
+        "CBCL total problems score"
+      )
+    )
+  ) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 2) +
+  facet_wrap(.~name, scales = "free") +
+  theme_mod +
+  labs(
+    x = NULL
+  )
+
+ggsave(
+  "~/Box/lucy_king_files/MoD/APCA/figures/histograms.png",
+  dpi = 300,
+  width = 15,
+  height = 13
+)
+```
+
 ```{r}
 df <-
   df %>% 
@@ -406,6 +451,7 @@ df %>%
   count(inr_fpl <= 2) %>% 
   mutate(per = n / sum(n))
 ```
+
 ```{r}
 df %>% 
   count(marital_status) %>% 
@@ -440,8 +486,11 @@ apca_corr <-
 apca_corr
 
 SpearmanRho(df$parent_num_childhood, df$child_num_dir_types, conf.level = .95)
+SpearmanRho(df$parent_num_childhood, df$child_num_wit_types, conf.level = .95)
 SpearmanRho(df$parent_num_precon, df$child_num_dir_types, conf.level = .95)
+SpearmanRho(df$parent_num_precon, df$child_num_wit_types, conf.level = .95)
 SpearmanRho(df$preg_num_types, df$child_num_dir_types, conf.level = .95)
+SpearmanRho(df$preg_num_types, df$child_num_wit_types, conf.level = .95)
 SpearmanRho(df$since_child_num_types, df$child_num_dir_types, conf.level = .95)
 
 SpearmanRho(df$child_age, df$child_num_dir_types, conf.level = .95)
@@ -522,7 +571,7 @@ apca_corr_plot <-
   )
 ```
 
-```{r}
+```{r, fig.height=5, fig.width=7.5}
 apca_corr_plot %>% 
   ggplot(aes(x = fct_rev(variable), y = fct_rev(term))) +
   geom_tile(aes(fill = abs(value_num))) +
@@ -556,7 +605,7 @@ apca_corr_plot %>%
 
 ggsave(
   "~/Box/lucy_king_files/MoD/APCA/figures/correlations.png",
-  dpi = 500,
+  dpi = 1000,
   height = 5,
   width = 7.5
 )
@@ -565,8 +614,9 @@ ggsave(
 ```{r}
 df %>% 
   dplyr::select(
+    total_problems_total,
     cesd_total,
-    bai_total_W,
+    bai_total,
     inr_fpl,
     mom_age,
     child_age
@@ -578,24 +628,11 @@ df %>%
 cor.test(df$bai_total, df$cesd_total)
 cor.test(df$mom_age, df$cesd_total)
 cor.test(df$mom_age, df$bai_total)
-```
-```{r}
-df %>% 
-  dplyr::select(
-    total_problems_total,
-    bai_total_W,
-    cesd_total,
-    inr_fpl,
-    mom_age,
-    child_age
-  ) %>% 
-  correlate(method = "pearson", use = "complete.obs") %>% 
-  shave(upper = FALSE) %>% 
-  fashion()
 
 cor.test(df$total_problems_total, df$cesd_total)
-cor.test(df$total_problems_total, df$bai_total_W)
+cor.test(df$total_problems_total, df$bai_total)
 ```
+
 
 ## t-tests
 ```{r}
@@ -623,17 +660,17 @@ t.test(df$child_num_dir_types ~ df$child_male)
 ```
 
 ```{r}
-t.test(df$cesd_total_W ~ df$mom_poc)
-t.test(df$cesd_total_W ~ df$mom_latinx)
-t.test(df$cesd_total_W ~ df$child_male)
+t.test(df$cesd_total ~ df$mom_poc)
+t.test(df$cesd_total ~ df$mom_latinx)
+t.test(df$cesd_total ~ df$child_male)
 
-t.test(df$bai_total_W ~ df$mom_poc)
-t.test(df$bai_total_W ~ df$mom_latinx)
-t.test(df$bai_total_W ~ df$child_male)
+t.test(df$bai_total ~ df$mom_poc)
+t.test(df$bai_total ~ df$mom_latinx)
+t.test(df$bai_total ~ df$child_male)
 
-t.test(df$total_problems_total_W ~ df$mom_poc)
-t.test(df$total_problems_total_W ~ df$mom_latinx)
-t.test(df$total_problems_total_W ~ df$child_male)
+t.test(df$total_problems_total ~ df$mom_poc)
+t.test(df$total_problems_total ~ df$mom_latinx)
+t.test(df$total_problems_total ~ df$child_male)
 
 ```
 
@@ -661,27 +698,54 @@ df %>%
 
 #### Spearman's correlations
 ```{r}
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$ctq_total_W, use = "complete.obs", conf.level = .95)
+
+# raw
+SpearmanRho(df$parent_num_childhood, df$ctq_total, use = "complete.obs", conf.level = .95)
 ```
 
 ```{r}
+# winsorized
 SpearmanRho(df$parent_num_precon, df$ctq_total_W, use = "complete.obs", conf.level = .95)
 SpearmanRho(df$preg_num_types_W, df$ctq_total_W, use = "complete.obs", conf.level = .95)
 SpearmanRho(df$since_child_num_types_W, df$ctq_total_W, use = "complete.obs", conf.level = .95)
+
+# raw
+SpearmanRho(df$parent_num_precon, df$ctq_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$preg_num_types, df$ctq_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$since_child_num_types, df$ctq_total, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
+
 ```{r}
-childhood_ctq <- correlationBF(df$parent_num_childhood_W, df$ctq_total_W)
+# winsorized
+##compute Bayesian correlation 
+childhood_ctqW <- correlationBF(df$parent_num_childhood_W, df$ctq_total_W)
+## obtain bayes factor for alternative hypothesis that association is not 0 vs. null hypothesis that it is 0
+childhood_ctqW <- describe_posterior(childhood_ctqW, ci = 0.95)$BF
+
+precon_ctqW <- correlationBF(df$parent_num_precon, df$ctq_total_W)
+precon_ctqW <- describe_posterior(precon_ctqW, ci = 0.95)$BF
+
+preg_ctqW <- correlationBF(df$preg_num_types_W, df$ctq_total_W)
+preg_ctqW <- describe_posterior(preg_ctqW, ci = 0.95)$BF
+
+since_ctqW <- correlationBF(df$since_child_num_types_W, df$ctq_total_W)
+since_ctqW <-describe_posterior(since_ctqW, ci = 0.95)$BF
+
+# raw
+childhood_ctq <- correlationBF(df$parent_num_childhood, df$ctq_total)
 childhood_ctq <- describe_posterior(childhood_ctq, ci = 0.95)$BF
 
-precon_ctq <- correlationBF(df$parent_num_precon, df$ctq_total_W)
+precon_ctq <- correlationBF(df$parent_num_precon, df$ctq_total)
 precon_ctq <- describe_posterior(precon_ctq, ci = 0.95)$BF
 
-preg_ctq <- correlationBF(df$preg_num_types_W, df$ctq_total_W)
+preg_ctq <- correlationBF(df$preg_num_types, df$ctq_total)
 preg_ctq <- describe_posterior(preg_ctq, ci = 0.95)$BF
 
-since_ctq <- correlationBF(df$since_child_num_types_W, df$ctq_total_W)
+since_ctq <- correlationBF(df$since_child_num_types, df$ctq_total)
 since_ctq <-describe_posterior(since_ctq, ci = 0.95)$BF
 
 con_BFs <-
@@ -691,6 +755,12 @@ con_BFs <-
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
+    ),
+    BF_ctqW = c(
+      childhood_ctqW,
+      precon_ctqW,
+      preg_ctqW,
+      since_ctqW
     ),
     BF_ctq = c(
       childhood_ctq,
@@ -708,36 +778,79 @@ Initially identified overdispersion using a poisson model. Used negative binomia
 #### Negative binomial model
 
 ```{r}
-glm.1 <- glm.nb(
+# winsorized 
+glmW.1 <- glm.nb(
   parent_num_childhood_W  ~ 
     scale(ctq_total_W, scale = FALSE),
+  data = df
+)
+
+# raw
+glm.1 <- glm.nb(
+  parent_num_childhood  ~ 
+    scale(ctq_total, scale = FALSE),
   data = df
 )
 ```
 
 #### Diagnostics
 ```{r}
-check_model(glm.1)
-check_heteroscedasticity(glm.1)
+# winsorized
+check_outliers(glmW.1)
+
+# raw
+check_outliers(glm.1)
 ```
 
 #### Performance
 ```{r}
+# winsorized
+model_performance(glmW.1)
+
+# raw
 model_performance(glm.1)
 ```
 
 #### Parameters
 ```{r}
+# winsorized
+model_parameters(
+  glmW.1,
+  exponentiate = TRUE
+) 
+
+# raw
 model_parameters(
   glm.1,
   exponentiate = TRUE
 ) 
 ```
 
-For each 1-unit increase in CTQ, the expected log count of APCA maternal cumulative adversity increases by .02. For each 1-unit increase in CTQ, the incidence rate for maternal cumulative adversity increased by 2%.
+For each 1-unit increase in CTQ, the expected log count of APCA maternal cumulative adversity increases by .03. For each 1-unit increase in CTQ, the incidence rate for maternal cumulative adversity increased by 3%.
+
+```{r}
+# examine predicted values from regression with raw data
+df_new_raw <-
+  df %>% 
+  dplyr::select(
+    ctq_total
+  ) 
+
+# generate predicted values
+df_new_raw$pred <-
+  predict(
+    glm.1,
+    df_new_raw,
+    type = "response"
+  )
+
+df_new_raw %>% 
+  arrange(desc(ctq_total))
+
+```
 
 #### Plot expected counts
-```{r}
+```{r fig.height=4, fig.width=5}
 # create new dataset with only CTQ
 df_new <-
   df %>% 
@@ -748,7 +861,7 @@ df_new <-
 # generate predicted values
 df_new$pred <-
   predict(
-    glm.1,
+    glmW.1,
     df_new,
     type = "response"
   )
@@ -765,11 +878,10 @@ ctq_plot <-
     alpha = 1/3,
     color = "black"
   ) +
-  scale_y_continuous(breaks = seq.int(0, 25, 5)) +
-  scale_x_continuous(breaks = seq.int(0, 50, 5)) +
+  scale_y_continuous(breaks = seq.int(0, 15, 5)) +
+  scale_x_continuous(breaks = seq.int(0, 100, 10)) +
   theme_mod +
   labs(
-    title = "Convergent validity",
     x = "CTQ-SF\nMaternal childhood maltreatment",
     y = "APCA\nMaternal childhood adversity"
   )
@@ -788,22 +900,41 @@ ggsave(
 
 #### Spearman's correlations
 ```{r}
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$prenatal_life_events_W, use = "complete.obs", conf.level = .95)
 SpearmanRho(df$parent_num_precon, df$prenatal_life_events_W, use = "complete.obs", conf.level = .95)
+
+# raw
+SpearmanRho(df$parent_num_childhood, df$prenatal_life_events, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$parent_num_precon, df$prenatal_life_events, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
 ```{r}
-childhood_le <- correlationBF(df$parent_num_childhood_W, df$prenatal_life_events_W)
+# winsorized
+childhood_leW <- correlationBF(df$parent_num_childhood_W, df$prenatal_life_events_W)
+childhood_leW  <- describe_posterior(childhood_leW, ci = 0.95)$BF
+
+precon_leW  <- correlationBF(df$parent_num_precon, df$prenatal_life_events_W)
+precon_leW  <- describe_posterior(precon_leW, ci = 0.95)$BF
+
+# raw
+childhood_le <- correlationBF(df$parent_num_childhood, df$prenatal_life_events)
 childhood_le  <- describe_posterior(childhood_le, ci = 0.95)$BF
 
-precon_le  <- correlationBF(df$parent_num_precon, df$prenatal_life_events_W)
+precon_le  <- correlationBF(df$parent_num_precon, df$prenatal_life_events)
 precon_le  <- describe_posterior(precon_le, ci = 0.95)$BF
 
 
 con_BFs <-
   con_BFs %>% 
   cbind(
+    BF_leW = c(
+      childhood_leW,
+      precon_leW,
+      NA_real_,
+      NA_real_
+    ),
     BF_le = c(
       childhood_le,
       precon_le,
@@ -818,36 +949,70 @@ con_BFs
 #### Negative binomial model
 
 ```{r}
-glm.2 <- glm.nb(
+# winsorized 
+glmW.2 <- glm.nb(
   parent_num_childhood_W  ~ 
     scale(prenatal_life_events_W, scale = FALSE),
   data = df
 )
 
-glm.3 <- glm.nb(
+glmW.3 <- glm.nb(
   parent_num_precon  ~ 
     scale(prenatal_life_events_W, scale = FALSE),
+  data = df
+)
+
+# raw 
+glm.2 <- glm.nb(
+  parent_num_childhood  ~ 
+    scale(prenatal_life_events, scale = FALSE),
+  data = df
+)
+
+glm.3 <- glm.nb(
+  parent_num_precon  ~ 
+    scale(prenatal_life_events, scale = FALSE),
   data = df
 )
 ```
 
 #### Diagnostics
 ```{r}
-check_model(glm.2)
-check_heteroscedasticity(glm.2)
+# winsorized
+check_outliers(glmW.2)
+check_outliers(glmW.3)
 
-check_model(glm.3)
-check_heteroscedasticity(glm.3)
+
+# raw
+check_outliers(glm.2)
+check_outliers(glm.3)
 ```
 
 #### Performance
 ```{r}
+# winsorized
+model_performance(glmW.2)
+model_performance(glmW.3)
+
+# raw
 model_performance(glm.2)
 model_performance(glm.3)
 ```
 
 #### Parameters
 ```{r}
+# winsorized 
+model_parameters(
+  glmW.2,
+  exponentiate = TRUE
+) 
+
+model_parameters(
+  glmW.3,
+  exponentiate = TRUE
+) 
+
+# raw
 model_parameters(
   glm.2,
   exponentiate = TRUE
@@ -859,63 +1024,14 @@ model_parameters(
 ) 
 ```
 
-For each 1-unit increase in CTQ, the expected log count of APCA maternal cumulative adversity increases by .02. For each 1-unit increase in CTQ, the incidence rate for maternal cumulative adversity increased by 2%.
-
-#### Plot expected counts
-```{r}
-# create new dataset with only CTQ
-df_new <-
-  df %>% 
-  dplyr::select(
-    ctq_total_W
-  ) 
-
-# generate predicted values
-df_new$pred <-
-  predict(
-    glm.1,
-    df_new,
-    type = "response"
-  )
-
-# plot
-ctq_plot <-
-  df_new %>% 
-  ggplot(aes(ctq_total_W, pred)) +
-  geom_smooth(color = "black", size = 3) +
-  geom_jitter2(
-    data = df,
-    aes(ctq_total_W, parent_num_childhood_W),
-    size = 5, 
-    alpha = 1/3,
-    color = "black"
-  ) +
-  scale_y_continuous(breaks = seq.int(0, 14, 2)) +
-  scale_x_continuous(breaks = seq.int(0, 50, 5)) +
-  theme_mod +
-  labs(
-    title = "Convergent validity",
-    x = "CTQ-SF\nMaternal childhood maltreatment",
-    y = "APCA\nMaternal childhood adversity"
-  )
-
-ctq_plot
-
-ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_num_types.png",
-  dpi = 500,
-  height = 5,
-  width = 6
-)
-```
-
-## Discriminant validity
+## Criterion validity
 
 ### BCES 
 
 #### Spearman's correlations
 
 ```{r}
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$bces_total_W, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$parent_num_precon, df$bces_total_W, use = "complete.obs", conf.level = .95)
@@ -923,20 +1039,44 @@ SpearmanRho(df$parent_num_precon, df$bces_total_W, use = "complete.obs", conf.le
 SpearmanRho(df$preg_num_types_W, df$bces_total_W, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$since_child_num_types_W, df$bces_total_W, use = "complete.obs", conf.level = .95)
+
+# raw
+SpearmanRho(df$parent_num_childhood, df$bces_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_precon, df$bces_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$preg_num_types, df$bces_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$since_child_num_types, df$bces_total, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
 ```{r}
-childhood_bce <- correlationBF(df$parent_num_childhood_W, df$bces_total_W)
+# winsorized
+childhood_bceW <- correlationBF(df$parent_num_childhood_W, df$bces_total_W)
+childhood_bceW  <- describe_posterior(childhood_bceW, ci = 0.95)$BF
+
+precon_bceW  <- correlationBF(df$parent_num_precon, df$bces_total_W)
+precon_bceW  <- describe_posterior(precon_bceW, ci = 0.95)$BF
+
+preg_bceW <- correlationBF(df$preg_num_types_W, df$bces_total_W)
+preg_bceW <- describe_posterior(preg_bceW, ci = 0.95)$BF
+
+since_bceW <- correlationBF(df$since_child_num_types_W, df$bces_total_W)
+since_bceW <-describe_posterior(since_bceW, ci = 0.95)$BF
+
+
+# raw
+childhood_bce <- correlationBF(df$parent_num_childhood, df$bces_total)
 childhood_bce  <- describe_posterior(childhood_bce, ci = 0.95)$BF
 
-precon_bce  <- correlationBF(df$parent_num_precon, df$bces_total_W)
+precon_bce  <- correlationBF(df$parent_num_precon, df$bces_total)
 precon_bce  <- describe_posterior(precon_bce, ci = 0.95)$BF
 
-preg_bce <- correlationBF(df$preg_num_types_W, df$bces_total_W)
+preg_bce <- correlationBF(df$preg_num_types, df$bces_total)
 preg_bce <- describe_posterior(preg_bce, ci = 0.95)$BF
 
-since_bce <- correlationBF(df$since_child_num_types_W, df$bces_total_W)
+since_bce <- correlationBF(df$since_child_num_types, df$bces_total)
 since_bce <-describe_posterior(since_bce, ci = 0.95)$BF
 
 dis_BFs <-
@@ -946,6 +1086,12 @@ dis_BFs <-
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
+    ),
+    BF_bceW = c(
+      childhood_bceW,
+      precon_bceW,
+      preg_bceW,
+      since_bceW
     ),
     BF_bce = c(
       childhood_bce,
@@ -961,26 +1107,48 @@ dis_BFs
 #### Negative binomial model
 
 ```{r}
+# winsorized 
+glmW.4 <- glm.nb(
+  parent_num_childhood_W  ~ 
+    scale(bces_total_W, scale = FALSE),
+  data = df
+)
+
+# raw 
 glm.4 <- glm.nb(
   parent_num_childhood  ~ 
-    scale(bces_total_W, scale = FALSE),
+    scale(bces_total, scale = FALSE),
   data = df
 )
 ```
 
 #### Diagnostics
 ```{r}
-check_model(glm.4)
-check_heteroscedasticity(glm.4)
+# winsorized
+check_outliers(glmW.4)
+
+# raw
+check_outliers(glm.4)
 ```
 
 #### Performance
 ```{r}
+# winsorized
+model_performance(glmW.4)
+
+# raw
 model_performance(glm.4)
 ```
 
 #### Parameters
 ```{r}
+# winsorized
+model_parameters(
+  glmW.4,
+  exponentiate = TRUE
+) 
+
+# raw
 model_parameters(
   glm.4,
   exponentiate = TRUE
@@ -989,12 +1157,12 @@ model_parameters(
 For each 1-unit increase in BCEs, the incidence rate for maternal cumulative adversity decreases by 22%.
 
 #### Plot expected counts
-```{r}
+```{r fig.height=4, fig.width=5}
 # create new dataset with BCEs only
 df_new.1 <-
   df %>% 
   dplyr::select(
-    bces_total_W
+    bces_total
   )
 
 # generate predicted values
@@ -1008,22 +1176,21 @@ df_new.1$pred <-
 # plot
 bces_plot <-
   df_new.1 %>% 
-  ggplot(aes(bces_total_W, pred)) +
+  ggplot(aes(bces_total, pred)) +
   geom_smooth(color = "black", size = 3, span = 1) +
   geom_jitter2(
     data = df,
-    aes(bces_total_W, parent_num_childhood_W),
+    aes(bces_total, parent_num_childhood),
     size = 5, 
     alpha = 1/3,
     color = "black"
   ) +
-  scale_y_continuous(breaks = seq.int(0, 15, 2)) +
+  scale_y_continuous(breaks = seq.int(0, 16, 2)) +
   scale_x_continuous(breaks = seq.int(0, 10, 1)) +
   theme_mod +
   labs(
-    title = "Discriminant validity",
     x = "BCEs\n Maternal positive childhood experiences",
-    y = NULL
+    y = "APCA\n Maternal childhood adversity"
   )
 
 bces_plot
@@ -1037,7 +1204,7 @@ ggsave(
 ```
 
 ### Arrange CTQ and BCEs plots
-```{r}
+```{r, fig.height=5, fig.width=12}
 ctq_bces_plots <- arrangeGrob(
   ctq_plot, 
   bces_plot, 
@@ -1049,16 +1216,16 @@ ggsave(
   ctq_bces_plots,
   dpi = 1000,
   height = 5,
-  width = 10
+  width = 12
 )
 ```
-
-## Concurrent validity
 
 ### CESD 
 
 #### Spearman's correlations
 ```{r}
+# winsorized
+SpearmanRho(df$parent_num_types, df$cesd_total_W, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$parent_num_childhood_W, df$cesd_total_W, use = "complete.obs", conf.level = .95)
 
@@ -1068,31 +1235,70 @@ SpearmanRho(df$preg_num_types_W, df$cesd_total_W, use = "complete.obs", conf.lev
 
 SpearmanRho(df$since_child_num_types_W, df$cesd_total_W, use = "complete.obs", conf.level = .95)
 
+# raw
+SpearmanRho(df$parent_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_childhood, df$cesd_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_precon, df$cesd_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$preg_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$since_child_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
 ```{r}
-childhood_cesd <- correlationBF(df$parent_num_childhood_W, df$cesd_total_W)
+# winsorized
+cumulative_cesdW <- correlationBF(df$parent_num_types, df$cesd_total_W)
+cumulative_cesdW <- describe_posterior(cumulative_cesdW, ci = 0.95)$BF
+
+childhood_cesdW <- correlationBF(df$parent_num_childhood_W, df$cesd_total_W)
+childhood_cesdW <- describe_posterior(childhood_cesdW, ci = 0.95)$BF
+
+precon_cesdW <- correlationBF(df$parent_num_precon, df$cesd_total_W)
+precon_cesdW <- describe_posterior(precon_cesdW, ci = 0.95)$BF
+
+preg_cesdW <- correlationBF(df$preg_num_types_W, df$cesd_total_W)
+preg_cesdW <- describe_posterior(preg_cesdW, ci = 0.95)$BF
+
+since_cesdW <- correlationBF(df$since_child_num_types_W, df$cesd_total_W)
+since_cesdW <-describe_posterior(since_cesdW, ci = 0.95)$BF
+
+# raw
+cumulative_cesd <- correlationBF(df$parent_num_types, df$cesd_total)
+cumulative_cesd <- describe_posterior(cumulative_cesd, ci = 0.95)$BF
+
+childhood_cesd <- correlationBF(df$parent_num_childhood, df$cesd_total)
 childhood_cesd <- describe_posterior(childhood_cesd, ci = 0.95)$BF
 
-precon_cesd <- correlationBF(df$parent_num_precon, df$cesd_total_W)
+precon_cesd <- correlationBF(df$parent_num_precon, df$cesd_total)
 precon_cesd <- describe_posterior(precon_cesd, ci = 0.95)$BF
 
-preg_cesd <- correlationBF(df$preg_num_types_W, df$cesd_total_W)
+preg_cesd <- correlationBF(df$preg_num_types, df$cesd_total)
 preg_cesd <- describe_posterior(preg_cesd, ci = 0.95)$BF
 
-since_cesd <- correlationBF(df$since_child_num_types_W, df$cesd_total_W)
+since_cesd <- correlationBF(df$since_child_num_types, df$cesd_total)
 since_cesd <-describe_posterior(since_cesd, ci = 0.95)$BF
 
 mp_BFs <-
   tibble(
     key = c(
+      "parent_num_types",
       "parent_num_childhood",
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
     ),
-    BF_cesd = c(
+    BF_cesdW = c(
+      cumulative_cesdW,
+      childhood_cesdW,
+      precon_cesdW,
+      preg_cesdW,
+      since_cesdW
+    ),
+     BF_cesd = c(
+      cumulative_cesd,
       childhood_cesd,
       precon_cesd,
       preg_cesd,
@@ -1105,7 +1311,8 @@ mp_BFs
 
 #### Multiple regression
 ```{r}
-lm.1 <- lm(
+# winsorized
+lmW.1 <- lm(
   cesd_total_W ~
     parent_num_childhood_W +
     parent_num_precon +
@@ -1113,19 +1320,47 @@ lm.1 <- lm(
     since_child_num_types_W,
   data = df
 )
+
+# raw
+lm.1 <- lm(
+  cesd_total ~
+    parent_num_childhood +
+    parent_num_precon +
+    preg_num_types +
+    since_child_num_types,
+  data = df
+)
+
 ```
 
+#### Diagnostics
 ```{r}
-check_model(lm.1)
+# winsorized
+check_outliers(lmW.1)
+
+# raw
+check_outliers(lm.1)
 ```
 
+#### Performance
 ```{r}
+# winsorized
+model_performance(lmW.1)
+
+# raw
 model_performance(lm.1)
 ```
 
+#### Parameters
 ```{r}
+# winsorized
+model_parameters(lmW.1)
+model_parameters(lmW.1, standardize = "refit")
+
+# raw
 model_parameters(lm.1)
 model_parameters(lm.1, standardize = "refit")
+
 ```
 
 ### BAI
@@ -1133,6 +1368,9 @@ model_parameters(lm.1, standardize = "refit")
 #### BAI Spearman's correlation
 
 ```{r}
+# winsorized
+SpearmanRho(df$parent_num_types, df$bai_total_W, use = "complete.obs", conf.level = .95)
+
 SpearmanRho(df$parent_num_childhood_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$parent_num_precon, df$bai_total_W, use = "complete.obs", conf.level = .95)
@@ -1140,26 +1378,66 @@ SpearmanRho(df$parent_num_precon, df$bai_total_W, use = "complete.obs", conf.lev
 SpearmanRho(df$preg_num_types_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$since_child_num_types_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
+
+# raw
+SpearmanRho(df$parent_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_childhood, df$bai_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_precon, df$bai_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$preg_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$since_child_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
 ```{r}
-childhood_bai <- correlationBF(df$parent_num_childhood_W, df$bai_total_W)
+# winsorized
+cumulative_baiW <- correlationBF(df$parent_num_types, df$bai_total_W)
+cumulative_baiW<- describe_posterior(cumulative_baiW, ci = 0.95)$BF
+
+childhood_baiW <- correlationBF(df$parent_num_childhood_W, df$bai_total_W)
+childhood_baiW<- describe_posterior(childhood_baiW, ci = 0.95)$BF
+
+precon_baiW <- correlationBF(df$parent_num_precon, df$bai_total_W)
+precon_baiW <- describe_posterior(precon_baiW, ci = 0.95)$BF
+
+preg_baiW <- correlationBF(df$preg_num_types_W, df$bai_total_W)
+preg_baiW <- describe_posterior(preg_baiW, ci = 0.95)$BF
+
+since_baiW <- correlationBF(df$since_child_num_types_W, df$bai_total_W)
+since_baiW <-describe_posterior(since_baiW, ci = 0.95)$BF
+
+# raw
+cumulative_bai <- correlationBF(df$parent_num_types, df$bai_total)
+cumulative_bai<- describe_posterior(cumulative_bai, ci = 0.95)$BF
+
+childhood_bai <- correlationBF(df$parent_num_childhood, df$bai_total)
 childhood_bai<- describe_posterior(childhood_bai, ci = 0.95)$BF
 
-precon_bai <- correlationBF(df$parent_num_precon, df$bai_total_W)
+precon_bai <- correlationBF(df$parent_num_precon, df$bai_total)
 precon_bai <- describe_posterior(precon_bai, ci = 0.95)$BF
 
-preg_bai <- correlationBF(df$preg_num_types_W, df$bai_total_W)
+preg_bai <- correlationBF(df$preg_num_types, df$bai_total)
 preg_bai <- describe_posterior(preg_bai, ci = 0.95)$BF
 
-since_bai <- correlationBF(df$since_child_num_types_W, df$bai_total_W)
+since_bai <- correlationBF(df$since_child_num_types, df$bai_total)
 since_bai <-describe_posterior(since_bai, ci = 0.95)$BF
+
 
 mp_BFs <-
   mp_BFs %>% 
   cbind(
-    BF_bai = c(
+    BF_baiW = c(
+      cumulative_baiW,
+      childhood_baiW,
+      precon_baiW,
+      preg_baiW,
+      since_baiW
+    ),
+     BF_bai = c(
+      cumulative_bai,
       childhood_bai,
       precon_bai,
       preg_bai,
@@ -1167,10 +1445,12 @@ mp_BFs <-
     )
   )
 
+mp_BFs
 ```
 #### Multiple regression
 ```{r}
-lm.2 <- lm(
+# winsorized
+lmW.2 <- lm(
  bai_total_W ~
     parent_num_childhood_W +
     parent_num_precon +
@@ -1178,17 +1458,43 @@ lm.2 <- lm(
     since_child_num_types_W,
   data = df
 )
+
+# raw
+lm.2 <- lm(
+ bai_total ~
+    parent_num_childhood +
+    parent_num_precon +
+    preg_num_types +
+    since_child_num_types,
+  data = df
+)
 ```
 
+#### Diagnostics
 ```{r}
-check_model(lm.2)
+# winsorized
+check_outliers(lmW.2)
+
+# raw
+check_outliers(lm.2)
 ```
 
+#### Performance
 ```{r}
+# winsorized
+model_performance(lmW.2)
+
+# raw
 model_performance(lm.2)
 ```
 
+#### Parameters
 ```{r}
+# winsorized
+model_parameters(lmW.2)
+model_parameters(lmW.2, standardize = "refit")
+
+# raw
 model_parameters(lm.2)
 model_parameters(lm.2, standardize = "refit")
 ```
@@ -1199,28 +1505,27 @@ model_parameters(lm.2, standardize = "refit")
 ```{r}
 scales_apca_cesd_bai_x <- list(
   "Childhood adversity" = scale_x_continuous(
-    breaks = seq.int(0, 14, 2)
+    breaks = seq.int(0, 16, 2)
   ),
   "Preconception adversity" = scale_x_continuous(
     breaks = seq.int(0, 10, 2)
   ),
   "Prenatal adversity"= scale_x_continuous(
-    breaks = seq.int(0, 8, 1)
+    breaks = seq.int(0, 10, 1)
   ),
   "Adversity since birth" = scale_x_continuous(
-    breaks = seq.int(0, 12, 2)
+    breaks = seq.int(0, 14, 2)
   )
 )
 
 scales_apca_cesd_bai_y <- list(
   "Depression" = scale_y_continuous(
-    breaks = seq.int(0, 30, 5)
+    breaks = seq.int(0, 35, 5)
   ),
   "Anxiety" = scale_y_continuous(
-    breaks = seq.int(0, 25, 5)
+    breaks = seq.int(0, 35, 5)
   )
 )
-
 
 mp_BFs_lf <-
   mp_BFs %>% 
@@ -1238,15 +1543,15 @@ mp_BFs_lf <-
   )
 ```
 
-```{r}
+```{r fig.height=6, fig.width=14.75}
 df %>% 
   dplyr::select(
-    Depression = cesd_total_W,
-    Anxiety = bai_total_W,
-    parent_num_childhood = parent_num_childhood_W,
+    Depression = cesd_total,
+    Anxiety = bai_total,
+    parent_num_childhood,
     parent_num_precon,
-    preg_num_types = preg_num_types_W,
-    since_child_num_types = since_child_num_types_W
+    preg_num_types,
+    since_child_num_types,
   ) %>% 
   pivot_longer(
     cols = parent_num_childhood:since_child_num_types,
@@ -1296,8 +1601,6 @@ df %>%
     se = FALSE,
     aes(color = BF_logic)
   ) +
-  scale_y_continuous(breaks = seq.int(0, 40, 5)) +
-  scale_x_continuous(breaks = seq.int(0, 15, 1)) +
   scale_color_brewer(
     palette = "Oranges"
   ) +
@@ -1333,88 +1636,100 @@ ggsave(
 
 ```
 
-## Comparative convergent validity
-
-### CTQ ~ CESD
-
-```{r}
-cor.test(df$ctq_total_W, df$cesd_total_W)
-
-ctq_cesd<- correlationBF(df$ctq_total_W, df$cesd_total_W)
-describe_posterior(ctq_cesd, ci = 0.95)$BF
-```
-
-### Life events measured in pregnancy ~ CESD
-
-```{r}
-SpearmanRho(df$prenatal_life_events_W, df$cesd_total_W, use = "complete.obs", conf.level = .95)
-
-ple_cesd<- correlationBF(df$prenatal_life_events_W, df$cesd_total_W)
-describe_posterior(ple_cesd, ci = 0.95)$BF
-```
-
-### CTQ ~ BAI
-```{r}
-cor.test(df$ctq_total_W, df$bai_total_W)
-
-ctq_bai<- correlationBF(df$ctq_total_W, df$bai_total_W)
-describe_posterior(ctq_bai, ci = 0.95)$BF
-```
-
-### Life events measured in pregnancy ~ BAI
-
-```{r}
-SpearmanRho(df$prenatal_life_events_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
-
-ple_bai <- correlationBF(df$prenatal_life_events_W, df$bai_total_W)
-describe_posterior(ple_bai, ci = 0.95)$BF
-```
-
 ### CBCL 
 
 #### Spearman's correlations
 ```{r}
 # maternal exposure
+
+## winsorized
+SpearmanRho(df$parent_num_types, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_childhood_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$parent_num_precon, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$preg_num_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$since_child_num_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+## raw
 SpearmanRho(df$parent_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
-SpearmanRho(df$parent_num_childhood_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$parent_num_childhood, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
 SpearmanRho(df$parent_num_precon, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
-SpearmanRho(df$preg_num_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$preg_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
-SpearmanRho(df$since_child_num_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$since_child_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
+```
 
+```{r}
 # child witnessing and exposure
-SpearmanRho(df$child_num_wit_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
 
-SpearmanRho(df$child_num_dir_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+## winsorized
+SpearmanRho(df$child_num_wit_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$child_num_dir_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+
+## raw
+SpearmanRho(df$child_num_wit_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
+
+SpearmanRho(df$child_num_dir_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 ```
 
 #### Bayes Factors
 ```{r}
-childhood_cbcl <- correlationBF(df$parent_num_childhood_W, df$total_problems_total)
+# winsorized 
+cumulative_cbclW <- correlationBF(df$parent_num_types, df$total_problems_total_W)
+cumulative_cbclW <- describe_posterior(cumulative_cbclW, ci = 0.95)$BF
+
+childhood_cbclW <- correlationBF(df$parent_num_childhood_W, df$total_problems_total_W)
+childhood_cbclW <- describe_posterior(childhood_cbclW, ci = 0.95)$BF
+
+precon_cbclW  <- correlationBF(df$parent_num_precon, df$total_problems_total_W)
+precon_cbclW  <- describe_posterior(precon_cbclW, ci = 0.95)$BF
+
+preg_cbclW  <- correlationBF(df$preg_num_types_W, df$total_problems_total_W)
+preg_cbclW <- describe_posterior(preg_cbclW, ci = 0.95)$BF
+
+since_cbclW  <- correlationBF(df$since_child_num_types_W, df$total_problems_total_W)
+since_cbclW  <-describe_posterior(since_cbclW, ci = 0.95)$BF
+
+wit_cbclW  <- correlationBF(df$child_num_wit_types_W, df$total_problems_total_W)
+wit_cbclW  <-describe_posterior(wit_cbclW, ci = 0.95)$BF
+
+dir_cbclW  <- correlationBF(df$child_num_dir_types_W, df$total_problems_total_W)
+dir_cbclW  <-describe_posterior(dir_cbclW, ci = 0.95)$BF
+
+# raw 
+cumulative_cbcl <- correlationBF(df$parent_num_types, df$total_problems_total)
+cumulative_cbcl <- describe_posterior(cumulative_cbcl, ci = 0.95)$BF
+
+childhood_cbcl <- correlationBF(df$parent_num_childhood, df$total_problems_total)
 childhood_cbcl <- describe_posterior(childhood_cbcl, ci = 0.95)$BF
 
 precon_cbcl  <- correlationBF(df$parent_num_precon, df$total_problems_total)
 precon_cbcl  <- describe_posterior(precon_cbcl, ci = 0.95)$BF
 
-preg_cbcl  <- correlationBF(df$preg_num_types_W, df$total_problems_total)
+preg_cbcl  <- correlationBF(df$preg_num_types, df$total_problems_total)
 preg_cbcl <- describe_posterior(preg_cbcl, ci = 0.95)$BF
 
-since_cbcl  <- correlationBF(df$since_child_num_types_W, df$total_problems_total)
+since_cbcl  <- correlationBF(df$since_child_num_types, df$total_problems_total)
 since_cbcl  <-describe_posterior(since_cbcl, ci = 0.95)$BF
 
-wit_cbcl  <- correlationBF(df$child_num_wit_types_W, df$total_problems_total)
+wit_cbcl  <- correlationBF(df$child_num_wit_types, df$total_problems_total)
 wit_cbcl  <-describe_posterior(wit_cbcl, ci = 0.95)$BF
 
-dir_cbcl  <- correlationBF(df$child_num_dir_types_W, df$total_problems_total)
+dir_cbcl  <- correlationBF(df$child_num_dir_types, df$total_problems_total)
 dir_cbcl  <-describe_posterior(dir_cbcl, ci = 0.95)$BF
 
 cp_BFs <-
   tibble(
     key = c(
+      "parent_num_types",
       "parent_num_childhood",
       "parent_num_precon",
       "preg_num_types",
@@ -1422,7 +1737,17 @@ cp_BFs <-
       "child_num_wit_types",
       "child_num_dir_types"
     ),
+    BF_cbclW= c(
+      cumulative_cbclW,
+      childhood_cbclW,
+      precon_cbclW,
+      preg_cbclW,
+      since_cbclW,
+      wit_cbclW,
+      dir_cbclW
+    ),
     BF_cbcl= c(
+      cumulative_cbcl,
       childhood_cbcl,
       precon_cbcl,
       preg_cbcl,
@@ -1436,71 +1761,163 @@ cp_BFs
 
 ```
 
-### CBCL visualize
-
+#### CBCL visualize associations
 ```{r}
-scales_apca_child_probs <- list(
-  `Maternal cumulative adversity` = scale_x_continuous(
-    breaks = seq.int(0, 25, 5)
+scales_apca_total_problems_x <- list(
+  "Maternal childhood adversity" = scale_x_continuous(
+    breaks = seq.int(0, 14, 2)
   ),
-  `Child direct adversity` = scale_x_continuous(
+  "Preconception adversity" = scale_x_continuous(
+    breaks = seq.int(0, 10, 2)
+  ),
+  "Prenatal adversity"= scale_x_continuous(
+    breaks = seq.int(0, 8, 1)
+  ),
+  "Maternal adversity since birth" = scale_x_continuous(
+    breaks = seq.int(0, 12, 2)
+  ),
+  "Child witnessed adversity" = scale_x_continuous(
+    breaks = seq.int(0, 8, 1)
+  ),
+  "Child direct adversity" = scale_x_continuous(
     breaks = seq.int(0, 4, 1)
   )
 )
 
+
+cp_BFs_lf <-
+  cp_BFs %>% 
+  dplyr::select(-BF_cbclW) %>% 
+  pivot_longer(
+    cols = -key
+  ) %>% 
+  rename(
+    adversity_type = key,
+    BF = value
+  )
+
+```
+
+```{r fig.height=6, fig.width=30}
 df %>% 
   dplyr::select(
     total_problems_total,
-    `Maternal cumulative adversity` = parent_num_types,
-    `Child direct adversity` = child_num_dir_types
+    parent_num_childhood,
+    parent_num_precon,
+    preg_num_types,
+    since_child_num_types ,
+    child_num_wit_types,
+    child_num_dir_types
   ) %>% 
   pivot_longer(
-    cols = `Maternal cumulative adversity`:`Child direct adversity`
+    cols = parent_num_childhood:child_num_dir_types,
+    names_to = "adversity_type",
+    values_to = "adversity_score"
   ) %>% 
+  left_join(cp_BFs_lf, by = c("adversity_type")) %>% 
   mutate(
-    name = factor(
-      name,
+    adversity_type = factor(
+      adversity_type,
       levels = c(
-        "Maternal cumulative adversity",
+        "parent_num_childhood",
+        "parent_num_precon",
+        "preg_num_types",
+        "since_child_num_types",
+        "child_num_wit_types",
+        "child_num_dir_types"
+      ),
+      labels = c(
+        "Maternal childhood adversity",
+        "Preconception adversity",
+        "Prenatal adversity",
+        "Maternal adversity since birth",
+        "Child witnessed adversity",
         "Child direct adversity"
       )
+    ),
+    BF_logic = case_when(
+      BF > .33 & BF < 1 ~ "Anecdotal",
+      BF >= 1 & BF < 3 ~ "Anecdotal",
+      BF >= 3 & BF < 10 ~ "Moderate",
+      BF >= 10 & BF < 30 ~ "Strong",
+      BF >= 30 & BF < 100 ~ "Very strong",
+      BF >= 100 ~ "Extreme"
+    ),
+    BF_logic = factor(
+      BF_logic,
+      levels = c("Anecdotal", "Moderate", "Strong", "Very strong", "Extreme")
     )
   ) %>% 
-  ggplot(aes(value, total_problems_total)) +
-  geom_jitter2(size = 5, alpha = 1/3) +
-  geom_smooth(method = "glm", size = 3, color = "black", se = FALSE) +
-  scale_y_continuous(breaks = seq.int(0, 70, 10)) +
-  scale_x_continuous(breaks = seq.int(0, 25, 1)) +
-  theme_mod +
-  labs(
-    x = "APCA score",
-    y = "Child total behavioral\nand emotional problems"
+  mutate(
+    row = case_when(
+      adversity_type == "Maternal childhood adversity" ~ "one",
+      adversity_type == "Preconception adversity" ~ "one",
+      adversity_type == "Prenatal adversity" ~ "one",
+      adversity_type == "Maternal adversity since birth" ~ "two",
+      adversity_type == "Child witnessed adversity" ~ "two",
+      adversity_type == "Child direct adversity" ~ "two"
+    )
+  ) %>% 
+  ggplot(aes(adversity_score, total_problems_total)) +
+  geom_jitter2(size = 4, alpha = 1/2, color = "black") +
+  geom_smooth(
+    method = "lm", 
+    size = 4, 
+    se = FALSE,
+    aes(color = BF_logic)
   ) +
-  facet_grid_sc(.~name, scales = list(x = scales_apca_child_probs))
+  #scale_y_continuous(breaks = seq.int(0, 40, 5)) +
+  #scale_x_continuous(breaks = seq.int(0, 15, 1)) +
+  scale_color_brewer(
+    palette = "Oranges"
+  ) +
+  theme_grey() +
+  theme(
+    panel.grid = element_blank(),
+    plot.title = element_text(size = 18, hjust = .5, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 18),
+    legend.title = element_text(size = 20), 
+    legend.text = element_text(size = 18),
+    strip.text.x = element_text(size = 16, face = "bold", color = "black"),
+    strip.text.y = element_text(size = 20, face = "bold", color = "black"),
+    strip.background = element_blank(),
+    legend.position = "right"
+  ) +
+  labs(
+    color = "Bayes Factor\n(Strength of evidence)",
+    x = NULL,
+    y = "Child total behavioral and emotional problems"
+  ) +
+  facet_grid_sc(
+    . ~ adversity_type,
+    scales = list(x = scales_apca_total_problems_x)
+  )
 
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/cbcl_apca_scores.png",
-  dpi = 500,
-  height = 5,
-  width = 11
+  "~/Box/lucy_king_files/MoD/APCA/figures/total_problems_adversity.png",
+  dpi = 1000,
+  height = 6,
+  width = 30
 )
 ```
 
-### CBCL total problems regressions
+#### CBCL total problems regressions
 
-### Fit model
+#### Fit model
 ```{r}
-lm.4 <- lm(
-  total_problems_total ~ 
-    scale(cesd_total, scale = FALSE) +
-    scale(bai_total, scale = FALSE),
+# winsorized 
+lmW.4 <- lm(
+  total_problems_total_W ~ 
+    scale(cesd_total_W, scale = FALSE) +
+    scale(bai_total_W, scale = FALSE),
   data = df
 )
-
-lm.5 <- lm(
-  total_problems_total ~ 
-    scale(cesd_total, scale = FALSE) +
-    scale(bai_total, scale = FALSE) +
+      
+lmW.5 <- lm(
+  total_problems_total_W ~ 
+    scale(cesd_total_W, scale = FALSE) +
+    scale(bai_total_W, scale = FALSE) +
     scale(parent_num_childhood_W, scale = FALSE) +
     scale(parent_num_precon, scale = FALSE) +
     scale(preg_num_types_W) +
@@ -1508,26 +1925,73 @@ lm.5 <- lm(
   data = df
 )
 
-
-lm.6 <- lm(
-  total_problems_total ~ 
+lmW.6 <- lm(
+  total_problems_total_W ~ 
     scale(cesd_total, scale = FALSE) +
     scale(bai_total, scale = FALSE) +
     scale(child_num_dir_types_W) +
     scale(child_num_wit_types_W),
   data = df
 )
-
 ```
 
-### Diagnostics
 ```{r}
-check_model(lm.5)
-check_model(lm.6)
+# raw 
+lm.4 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE),
+  data = df
+)
+      
+lm.5 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE) +
+    scale(parent_num_childhood, scale = FALSE) +
+    scale(parent_num_precon, scale = FALSE) +
+    scale(preg_num_types) +
+    scale(since_child_num_types),
+  data = df
+)
+
+lm.6 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE) +
+    scale(child_num_dir_types) +
+    scale(child_num_wit_types),
+  data = df
+)
 ```
 
-### Performance
+#### Diagnostics
 ```{r}
+# winsorized
+check_outliers(lmW.5)
+check_outliers(lmW.6)
+
+# raw
+check_outliers(lm.5)
+check_outliers(lm.6)
+```
+
+#### Performance
+```{r}
+# winsorized
+lmW.4_performance <- model_performance(lmW.4)
+lmW.5_performance <- model_performance(lmW.5)
+lmW.6_performance <- model_performance(lmW.6)
+
+# R-squared change for maternal adversity variables
+lmW.5_performance$R2_adjusted - lmW.4_performance$R2
+
+# R-squared change for child adversity variables
+lmW.6_performance$R2_adjusted - lmW.4_performance$R2
+```
+
+```{r}
+# raw
 lm.4_performance <- model_performance(lm.4)
 lm.5_performance <- model_performance(lm.5)
 lm.6_performance <- model_performance(lm.6)
@@ -1539,8 +2003,18 @@ lm.5_performance$R2_adjusted - lm.4_performance$R2
 lm.6_performance$R2_adjusted - lm.4_performance$R2
 ```
 
-### Parameters
+#### Parameters
 ```{r}
+# winsorized
+model_parameters(lmW.5) 
+model_parameters(lmW.5, standardize = "refit")
+
+model_parameters(lmW.6) 
+model_parameters(lmW.6, standardize = "refit")
+```
+
+```{r}
+# raw
 model_parameters(lm.5) 
 model_parameters(lm.5, standardize = "refit")
 

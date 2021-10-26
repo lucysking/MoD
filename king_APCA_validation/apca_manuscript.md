@@ -1,27 +1,29 @@
-Analyses for **Shared worlds and shared consequences: Initial validation
-of the Assessment of Parent and Child Adversity (APCA)** (King et al.,
-2021)
-================
-Lucy S. King
-5/14/2021
 
-  - [Environment](#environment)
-  - [Read in data](#read-in-data)
-  - [Sample descriptives](#sample-descriptives)
-      - [Missing data](#missing-data)
-      - [Internal consistency of
+-   [Environment](#environment)
+-   [Read in data](#read-in-data)
+-   [Sample descriptives](#sample-descriptives)
+    -   [Missing data](#missing-data)
+    -   [Internal consistency of
         measures](#internal-consistency-of-measures)
-      - [Continuous variables](#continuous-variables)
-      - [Categorical variables](#categorical-variables)
-      - [Correlations](#correlations)
-      - [t-tests](#t-tests)
-      - [Additional APCA descriptives](#additional-apca-descriptives)
-  - [Primary statistical analyses](#primary-statistical-analyses)
-      - [Convergent validity](#convergent-validity)
-      - [Discriminant validity](#discriminant-validity)
-      - [Concurrent validity](#concurrent-validity)
-      - [Comparative convergent
-        validity](#comparative-convergent-validity)
+    -   [Continuous variables](#continuous-variables)
+    -   [Categorical variables](#categorical-variables)
+    -   [Correlations](#correlations)
+    -   [t-tests](#t-tests)
+    -   [Additional APCA descriptives](#additional-apca-descriptives)
+-   [Primary statistical analyses](#primary-statistical-analyses)
+    -   [Convergent validity](#convergent-validity)
+    -   [Criterion validity](#criterion-validity)
+
+|                                                                                        |
+|----------------------------------------------------------------------------------------|
+| title: "Analyses for Validation of the Assessment of Parent and Child Adversity (APCA) |
+| in Mothers and Young Children (King et al., 2021)"                                     |
+| author: “Lucy S. King”                                                                 |
+| date: “5/14/2021”                                                                      |
+| output:                                                                                |
+| github\_document:                                                                      |
+| toc: true                                                                              |
+| toc\_depth: 2                                                                          |
 
 # Environment
 
@@ -29,12 +31,12 @@ Lucy S. King
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
 
-    ## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
-    ## ✓ tibble  3.1.2     ✓ dplyr   1.0.4
-    ## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
-    ## ✓ readr   1.4.0     ✓ forcats 0.5.1
+    ## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+    ## ✓ tibble  3.1.5     ✓ dplyr   1.0.7
+    ## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
+    ## ✓ readr   2.0.2     ✓ forcats 0.5.1
 
     ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
     ## x dplyr::filter() masks stats::filter()
@@ -44,32 +46,25 @@ library(tidyverse)
 library(corrr)
 library(performance)
 library(parameters)
-library(effectsize)
-library(boot)
-library(pscl)
 ```
 
-    ## Classes and Methods for R developed in the
-    ## Political Science Computational Laboratory
-    ## Department of Political Science
-    ## Stanford University
-    ## Simon Jackman
-    ## hurdle and zeroinfl functions by Achim Zeileis
+    ## Registered S3 methods overwritten by 'parameters':
+    ##   method                           from      
+    ##   as.double.parameters_kurtosis    datawizard
+    ##   as.double.parameters_skewness    datawizard
+    ##   as.double.parameters_smoothness  datawizard
+    ##   as.numeric.parameters_kurtosis   datawizard
+    ##   as.numeric.parameters_skewness   datawizard
+    ##   as.numeric.parameters_smoothness datawizard
+    ##   print.parameters_distribution    datawizard
+    ##   print.parameters_kurtosis        datawizard
+    ##   print.parameters_skewness        datawizard
+    ##   summary.parameters_kurtosis      datawizard
+    ##   summary.parameters_skewness      datawizard
 
 ``` r
 library(ggpubr)
 library(see)
-library(msm)
-```
-
-    ## 
-    ## Attaching package: 'msm'
-
-    ## The following object is masked from 'package:boot':
-    ## 
-    ##     cav
-
-``` r
 library(facetscales)
 library(DescTools)
 library(gridExtra)
@@ -116,11 +111,7 @@ library(BayesFactor)
 
 ``` r
 library(bayestestR)
-```
 
-    ## Note: The default CI width (currently `ci=0.89`) might change in future versions (see https://github.com/easystats/bayestestR/discussions/250). To prevent any issues, please set it explicitly when using bayestestR functions, via the 'ci' argument.
-
-``` r
 home <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/"
 demo_file <- paste0(home, "demographics/demo_cleaned_20210512.csv")
 apca_file <- paste0(home, "APCA/apca_scored_20210514.csv")
@@ -148,6 +139,7 @@ theme_mod <-
   )
 
 options(scipen = 999)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
 # Read in data
@@ -167,132 +159,6 @@ d <-
   left_join(read_csv(bces_file), by = "id") %>% 
   left_join(read_csv(mod_bl_stress_file), by = "id") 
 ```
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_character(),
-    ##   id = col_double(),
-    ##   timestamp = col_date(format = ""),
-    ##   mom_latinx = col_double(),
-    ##   mom_poc = col_double(),
-    ##   mom_anative = col_double(),
-    ##   mom_asian = col_double(),
-    ##   mom_black = col_double(),
-    ##   mom_pnative = col_double(),
-    ##   mom_white = col_double(),
-    ##   mom_other_race = col_double(),
-    ##   mom_decline_race = col_double(),
-    ##   employment_explain = col_logical(),
-    ##   marital_status_describe = col_logical(),
-    ##   ppl_in_home_schoolage = col_double(),
-    ##   ppl_in_home_adults = col_double(),
-    ##   ppl_in_home_allchild = col_double(),
-    ##   current_num_children = col_double(),
-    ##   num_children_bio = col_double(),
-    ##   child_anative = col_double(),
-    ##   child_asian = col_double()
-    ##   # ... with 19 more columns
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   redcap_event_name = col_character(),
-    ##   redcap_survey_identifier = col_logical(),
-    ##   apca_timestamp = col_character(),
-    ##   other1_desc = col_character(),
-    ##   other1_child_age_wit = col_logical(),
-    ##   other1_child_age_wit_unit = col_logical(),
-    ##   other1_child_exp_wit = col_logical(),
-    ##   other1_child_sev_wit = col_logical(),
-    ##   other2_desc = col_character(),
-    ##   jail_child_age_wit = col_logical(),
-    ##   jail_child_age_wit_unit = col_logical(),
-    ##   jail_child_exp_wit = col_logical(),
-    ##   jail_child_sev_wit = col_logical(),
-    ##   police_child_age_wit = col_logical(),
-    ##   police_child_age_wit_unit = col_logical(),
-    ##   police_child_exp_wit = col_logical(),
-    ##   police_child_sev_wit = col_logical(),
-    ##   adopt_age_offset = col_logical(),
-    ##   sep_age_offset = col_logical(),
-    ##   famviol_child_age_wit = col_logical()
-    ##   # ... with 26 more columns
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   redcap_event_name = col_character(),
-    ##   cesd_timestamp = col_datetime(format = "")
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   bai_timestamp = col_datetime(format = "")
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   date = col_character(),
-    ##   vocabulary_score_for_30_35_months_tscore = col_logical()
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   .default = col_double(),
-    ##   ctq_timestamp = col_datetime(format = "")
-    ## )
-    ## ℹ Use `spec()` for the full column specifications.
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   id = col_double(),
-    ##   bces_timestamp = col_datetime(format = ""),
-    ##   bce_1 = col_double(),
-    ##   bce_2 = col_double(),
-    ##   bce_3 = col_double(),
-    ##   bce_4 = col_double(),
-    ##   bce_5 = col_double(),
-    ##   bce_6 = col_double(),
-    ##   bce_7 = col_double(),
-    ##   bce_8 = col_double(),
-    ##   bce_9 = col_double(),
-    ##   bce_10 = col_double(),
-    ##   bces_total = col_double()
-    ## )
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   id = col_double(),
-    ##   stress_death_lovd1 = col_double(),
-    ##   stress_accident = col_double(),
-    ##   stress_bully = col_double(),
-    ##   stress_divorce_parent = col_double(),
-    ##   stress_divorce_self = col_double(),
-    ##   stress_home_loss_parent = col_double(),
-    ##   stress_home_loss_self = col_double(),
-    ##   stress_job_loss_parent = col_double(),
-    ##   stress_job_loss_self = col_double(),
-    ##   stress_major_illness = col_double(),
-    ##   stress_other_experience1 = col_double(),
-    ##   stress_other_experience2 = col_double()
-    ## )
 
 ``` r
 df <-
@@ -344,9 +210,9 @@ df %>%
   count(!is.na(ctq_total))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(ctq_total)`     n
-    ## * <lgl>               <int>
+    ##   <lgl>               <int>
     ## 1 FALSE                   1
     ## 2 TRUE                   96
 
@@ -355,9 +221,9 @@ df %>%
   count(!is.na(bces_total))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(bces_total)`     n
-    ## * <lgl>                <int>
+    ##   <lgl>                <int>
     ## 1 FALSE                    1
     ## 2 TRUE                    96
 
@@ -366,9 +232,9 @@ df %>%
   count(!is.na(cesd_total))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(cesd_total)`     n
-    ## * <lgl>                <int>
+    ##   <lgl>                <int>
     ## 1 FALSE                    1
     ## 2 TRUE                    96
 
@@ -377,9 +243,9 @@ df %>%
   count(!is.na(bai_total))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(bai_total)`     n
-    ## * <lgl>               <int>
+    ##   <lgl>               <int>
     ## 1 FALSE                   1
     ## 2 TRUE                   96
 
@@ -388,9 +254,9 @@ df %>%
   count(!is.na(total_problems_total))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(total_problems_total)`     n
-    ## * <lgl>                          <int>
+    ##   <lgl>                          <int>
     ## 1 FALSE                              1
     ## 2 TRUE                              96
 
@@ -399,9 +265,9 @@ df %>%
   count(!is.na(prenatal_life_events))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(prenatal_life_events)`     n
-    ## * <lgl>                          <int>
+    ##   <lgl>                          <int>
     ## 1 FALSE                             16
     ## 2 TRUE                              81
 
@@ -410,9 +276,9 @@ df %>%
   count(!is.na(prenatal_life_events))
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   `!is.na(prenatal_life_events)`     n
-    ## * <lgl>                          <int>
+    ##   <lgl>                          <int>
     ## 1 FALSE                             16
     ## 2 TRUE                              81
 
@@ -520,62 +386,6 @@ df %>%
     ## ctq_25 0.95 0.04 0.01 0.00 0.00 0.01
 
 ``` r
-# BCES
-df %>% 
-  dplyr::select(bce_1:bce_10) %>% 
-  psych::alpha()
-```
-
-    ## Warning in psych::alpha(.): Item = bce_2 had no variance and was deleted but
-    ## still is counted in the score
-
-    ## 
-    ## Reliability analysis   
-    ## Call: psych::alpha(x = .)
-    ## 
-    ##   raw_alpha std.alpha G6(smc) average_r S/N  ase mean   sd median_r
-    ##       0.64      0.64     0.7      0.17 1.8 0.05 0.94 0.11     0.16
-    ## 
-    ##  lower alpha upper     95% confidence boundaries
-    ## 0.54 0.64 0.74 
-    ## 
-    ##  Reliability if an item is dropped:
-    ##        raw_alpha std.alpha G6(smc) average_r S/N alpha se var.r med.r
-    ## bce_1       0.64      0.64    0.69      0.18 1.8    0.050 0.033  0.18
-    ## bce_3       0.66      0.65    0.70      0.19 1.8    0.045 0.035  0.21
-    ## bce_4       0.62      0.63    0.68      0.18 1.7    0.053 0.033  0.16
-    ## bce_5       0.64      0.67    0.71      0.20 2.0    0.051 0.032  0.22
-    ## bce_6       0.60      0.62    0.65      0.17 1.6    0.057 0.027  0.16
-    ## bce_7       0.54      0.57    0.64      0.14 1.3    0.067 0.032  0.10
-    ## bce_8       0.62      0.61    0.66      0.16 1.6    0.054 0.030  0.16
-    ## bce_9       0.55      0.57    0.63      0.14 1.3    0.065 0.031  0.16
-    ## bce_10      0.60      0.58    0.63      0.15 1.4    0.056 0.029  0.15
-    ## 
-    ##  Item statistics 
-    ##         n raw.r std.r r.cor r.drop mean   sd
-    ## bce_1  96  0.35  0.42  0.30   0.18 0.96 0.20
-    ## bce_3  96  0.42  0.39  0.24   0.17 0.90 0.31
-    ## bce_4  96  0.47  0.45  0.33   0.28 0.94 0.24
-    ## bce_5  96  0.25  0.31  0.14   0.12 0.98 0.14
-    ## bce_6  96  0.54  0.50  0.45   0.38 0.95 0.22
-    ## bce_7  96  0.74  0.67  0.64   0.54 0.86 0.34
-    ## bce_8  96  0.44  0.53  0.47   0.33 0.98 0.14
-    ## bce_9  96  0.72  0.68  0.65   0.51 0.85 0.35
-    ## bce_10 96  0.57  0.65  0.62   0.48 0.98 0.14
-    ## 
-    ## Non missing response frequency for each item
-    ##           0    1 miss
-    ## bce_1  0.04 0.96 0.01
-    ## bce_3  0.10 0.90 0.01
-    ## bce_4  0.06 0.94 0.01
-    ## bce_5  0.02 0.98 0.01
-    ## bce_6  0.05 0.95 0.01
-    ## bce_7  0.14 0.86 0.01
-    ## bce_8  0.02 0.98 0.01
-    ## bce_9  0.15 0.85 0.01
-    ## bce_10 0.02 0.98 0.01
-
-``` r
 # CESD
 df %>% 
   dplyr::select(cesd_1:cesd_20) %>% 
@@ -668,9 +478,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 3 x 3
+    ## # A tibble: 3 × 3
     ##   `cesd_total >= 16`     n    per
-    ## * <lgl>              <int>  <dbl>
+    ##   <lgl>              <int>  <dbl>
     ## 1 FALSE                 81 0.835 
     ## 2 TRUE                  15 0.155 
     ## 3 NA                     1 0.0103
@@ -771,9 +581,9 @@ df  %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 3 x 3
+    ## # A tibble: 3 × 3
     ##   `bai_total >= 16`     n    per
-    ## * <lgl>             <int>  <dbl>
+    ##   <lgl>             <int>  <dbl>
     ## 1 FALSE                90 0.928 
     ## 2 TRUE                  6 0.0619
     ## 3 NA                    1 0.0103
@@ -785,34 +595,9 @@ df %>%
   psych::alpha()
 ```
 
-    ## Warning in psych::alpha(.): Item = c15_prob_57 had no variance and was deleted
-    ## but still is counted in the score
-
-    ## Warning in psych::alpha(.): Item = c15_prob_75 had no variance and was deleted
-    ## but still is counted in the score
-
-    ## Warning in psych::alpha(.): Item = c15_prob_80 had no variance and was deleted
-    ## but still is counted in the score
-
-    ## In factor.stats, the correlation matrix is singular, an approximation is used
-
-    ## Warning in fa.stats(r = r, f = f, phi = phi, n.obs = n.obs, np.obs = np.obs, :
-    ## In factor.stats, the correlation matrix is singular, and we could not calculate
-    ## the beta weights for factor score estimates
-
-    ## Warning in psych::alpha(.): Some items were negatively correlated with the total scale and probably 
-    ## should be reversed.  
-    ## To do this, run the function again with the 'check.keys=TRUE' option
-
     ## Some items ( c15_prob_39 c15_prob_41 c15_prob_49 c15_prob_60 c15_prob_93 ) were negatively correlated with the total scale and 
     ## probably should be reversed.  
     ## To do this, run the function again with the 'check.keys=TRUE' option
-
-    ## Warning in cor.smooth(R): Matrix was not positive definite, smoothing was done
-
-    ## Warning in cor.smooth(R): Matrix was not positive definite, smoothing was done
-    
-    ## Warning in cor.smooth(R): Matrix was not positive definite, smoothing was done
 
     ## 
     ## Reliability analysis   
@@ -1137,9 +922,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 3 x 3
+    ## # A tibble: 3 × 3
     ##   `total_problems_tscore >= 60`     n    per
-    ## * <lgl>                         <int>  <dbl>
+    ##   <lgl>                         <int>  <dbl>
     ## 1 FALSE                            88 0.907 
     ## 2 TRUE                              8 0.0825
     ## 3 NA                                1 0.0103
@@ -1154,19 +939,7 @@ df %>%
   )
 ```
 
-    ## Warning: `funs()` was deprecated in dplyr 0.8.0.
-    ## Please use a list of either functions or lambdas: 
-    ## 
-    ##   # Simple named list: 
-    ##   list(mean = mean, median = median)
-    ## 
-    ##   # Auto named with `tibble::lst()`: 
-    ##   tibble::lst(mean, median)
-    ## 
-    ##   # Using lambdas
-    ##   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
-
-    ## # A tibble: 1 x 12
+    ## # A tibble: 1 × 12
     ##   mom_age_mean child_age_mean inr_fpl_mean mom_age_sd child_age_sd inr_fpl_sd
     ##          <dbl>          <dbl>        <dbl>      <dbl>        <dbl>      <dbl>
     ## 1         37.2           4.19         6.44       4.56        0.872       3.26
@@ -1178,6 +951,7 @@ df %>%
 df %>% 
   summarise_at(
     vars(
+      parent_num_types,
       parent_num_childhood,
       parent_num_precon,
       preg_num_types,
@@ -1189,64 +963,42 @@ df %>%
   )
 ```
 
-    ## # A tibble: 1 x 24
-    ##   parent_num_childhoo… parent_num_precon_… preg_num_types_m… since_child_num_ty…
-    ##                  <dbl>               <dbl>             <dbl>               <dbl>
-    ## 1                 3.59                2.86              1.24                2.70
-    ## # … with 20 more variables: child_num_wit_types_mean <dbl>,
-    ## #   child_num_dir_types_mean <dbl>, parent_num_childhood_sd <dbl>,
+    ## # A tibble: 1 × 28
+    ##   parent_num_types_mean parent_num_childho… parent_num_precon… preg_num_types_m…
+    ##                   <dbl>               <dbl>              <dbl>             <dbl>
+    ## 1                  9.90                3.59               2.86              1.24
+    ## # … with 24 more variables: since_child_num_types_mean <dbl>,
+    ## #   child_num_wit_types_mean <dbl>, child_num_dir_types_mean <dbl>,
+    ## #   parent_num_types_sd <dbl>, parent_num_childhood_sd <dbl>,
     ## #   parent_num_precon_sd <dbl>, preg_num_types_sd <dbl>,
     ## #   since_child_num_types_sd <dbl>, child_num_wit_types_sd <dbl>,
-    ## #   child_num_dir_types_sd <dbl>, parent_num_childhood_min <dbl>,
-    ## #   parent_num_precon_min <dbl>, preg_num_types_min <dbl>,
-    ## #   since_child_num_types_min <dbl>, child_num_wit_types_min <dbl>,
-    ## #   child_num_dir_types_min <dbl>, parent_num_childhood_max <dbl>,
-    ## #   parent_num_precon_max <dbl>, preg_num_types_max <dbl>,
-    ## #   since_child_num_types_max <dbl>, child_num_wit_types_max <dbl>,
-    ## #   child_num_dir_types_max <dbl>
+    ## #   child_num_dir_types_sd <dbl>, parent_num_types_min <dbl>,
+    ## #   parent_num_childhood_min <dbl>, parent_num_precon_min <dbl>, …
 
 ``` r
 df %>% 
   summarise_at(
     vars(
       ctq_total, 
+      prenatal_life_events,
       bces_total,
       cesd_total, 
       bai_total,
-      total_problems_total,
-      parent_num_childhood,
-      parent_num_precon,
-      preg_num_types,
-      since_child_num_types, 
-      child_num_wit_types,
-      child_num_dir_types
     ),
     funs(mean, sd, min, max), na.rm = TRUE
   )
 ```
 
-    ## # A tibble: 1 x 44
-    ##   ctq_total_mean bces_total_mean cesd_total_mean bai_total_mean total_problems_…
-    ##            <dbl>           <dbl>           <dbl>          <dbl>            <dbl>
-    ## 1           7.48            9.40            9.68           5.25             25.3
-    ## # … with 39 more variables: parent_num_childhood_mean <dbl>,
-    ## #   parent_num_precon_mean <dbl>, preg_num_types_mean <dbl>,
-    ## #   since_child_num_types_mean <dbl>, child_num_wit_types_mean <dbl>,
-    ## #   child_num_dir_types_mean <dbl>, ctq_total_sd <dbl>, bces_total_sd <dbl>,
-    ## #   cesd_total_sd <dbl>, bai_total_sd <dbl>, total_problems_total_sd <dbl>,
-    ## #   parent_num_childhood_sd <dbl>, parent_num_precon_sd <dbl>,
-    ## #   preg_num_types_sd <dbl>, since_child_num_types_sd <dbl>,
-    ## #   child_num_wit_types_sd <dbl>, child_num_dir_types_sd <dbl>,
-    ## #   ctq_total_min <dbl>, bces_total_min <dbl>, cesd_total_min <dbl>,
-    ## #   bai_total_min <dbl>, total_problems_total_min <dbl>,
-    ## #   parent_num_childhood_min <dbl>, parent_num_precon_min <dbl>,
-    ## #   preg_num_types_min <dbl>, since_child_num_types_min <dbl>,
-    ## #   child_num_wit_types_min <dbl>, child_num_dir_types_min <dbl>,
-    ## #   ctq_total_max <dbl>, bces_total_max <dbl>, cesd_total_max <dbl>,
-    ## #   bai_total_max <dbl>, total_problems_total_max <dbl>,
-    ## #   parent_num_childhood_max <dbl>, parent_num_precon_max <dbl>,
-    ## #   preg_num_types_max <dbl>, since_child_num_types_max <dbl>,
-    ## #   child_num_wit_types_max <dbl>, child_num_dir_types_max <dbl>
+    ## # A tibble: 1 × 20
+    ##   ctq_total_mean prenatal_life_e… bces_total_mean cesd_total_mean bai_total_mean
+    ##            <dbl>            <dbl>           <dbl>           <dbl>          <dbl>
+    ## 1           7.48             2.20            9.40            9.68           5.25
+    ## # … with 15 more variables: ctq_total_sd <dbl>, prenatal_life_events_sd <dbl>,
+    ## #   bces_total_sd <dbl>, cesd_total_sd <dbl>, bai_total_sd <dbl>,
+    ## #   ctq_total_min <dbl>, prenatal_life_events_min <dbl>, bces_total_min <dbl>,
+    ## #   cesd_total_min <dbl>, bai_total_min <dbl>, ctq_total_max <dbl>,
+    ## #   prenatal_life_events_max <dbl>, bces_total_max <dbl>, cesd_total_max <dbl>,
+    ## #   bai_total_max <dbl>
 
 ### Identify outliers and winsorize
 
@@ -1289,6 +1041,7 @@ plot_histogram <- function(x) {
 continuous_vars <- 
   df %>% 
   dplyr::select(
+    parent_num_types,
     parent_num_childhood,
     parent_num_precon,
     preg_num_types,
@@ -1310,74 +1063,127 @@ histograms_continuous
 
     ## [[1]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
     ## 
     ## [[2]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
 
     ## 
     ## [[3]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
 
     ## 
     ## [[4]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->
 
     ## 
     ## [[5]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-5.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-5.png)<!-- -->
 
     ## 
     ## [[6]]
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-6.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-6.png)<!-- -->
 
     ## 
     ## [[7]]
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_bin).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-7.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-7.png)<!-- -->
 
     ## 
     ## [[8]]
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_bin).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-8.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-8.png)<!-- -->
 
     ## 
     ## [[9]]
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_bin).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-9.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-9.png)<!-- -->
 
     ## 
     ## [[10]]
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_bin).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-10.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-10.png)<!-- -->
 
     ## 
     ## [[11]]
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_bin).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-11.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-11.png)<!-- -->
 
     ## 
     ## [[12]]
 
-    ## Warning: Removed 16 rows containing non-finite values (stat_bin).
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-12.png)<!-- -->
 
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-12.png)<!-- -->
+    ## 
+    ## [[13]]
+
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-14-13.png)<!-- -->
+
+``` r
+df %>% 
+  dplyr::select(
+    `Maternal childhood adversity` = parent_num_childhood,
+    `Preconception adversity` = parent_num_precon,
+    `Prenatal adversity` = preg_num_types,
+    `Maternal adversity since birth` = since_child_num_types, 
+    `Maternal cumulative adversity` = parent_num_types,
+    `Child witnessed adversity` = child_num_wit_types,
+    `Child direct adversity` = child_num_dir_types,
+    `CTQ-SF total score` = ctq_total, 
+    `DQAQ-SPF maternal adversity` = prenatal_life_events,
+    `BCEs total score` = bces_total,
+    `CES-D total score` = cesd_total, 
+    `BAI total score` = bai_total,
+    `CBCL total problems score` = total_problems_total
+  ) %>% 
+  pivot_longer(
+    everything()
+  ) %>% 
+  mutate(
+    name = factor(
+      name,
+      levels = c(
+        "Maternal childhood adversity",
+        "Preconception adversity",
+        "Prenatal adversity",
+        "Maternal adversity since birth",
+        "Maternal cumulative adversity",
+        "Child witnessed adversity",
+        "Child direct adversity",
+        "CTQ-SF total score",
+        "DQAQ-SPF maternal adversity",
+        "BCEs total score",
+        "CES-D total score",
+        "BAI total score",
+        "CBCL total problems score"
+      )
+    )
+  ) %>% 
+  ggplot(aes(value)) +
+  geom_histogram(binwidth = 2) +
+  facet_wrap(.~name, scales = "free") +
+  theme_mod +
+  labs(
+    x = NULL
+  )
+```
+
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+ggsave(
+  "~/Box/lucy_king_files/MoD/APCA/figures/histograms.png",
+  dpi = 300,
+  width = 15,
+  height = 13
+)
+```
 
 ``` r
 df <-
@@ -1422,9 +1228,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_poc     n   per
-    ## *   <dbl> <int> <dbl>
+    ##     <dbl> <int> <dbl>
     ## 1       0    66 0.680
     ## 2       1    31 0.320
 
@@ -1434,9 +1240,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_white     n   per
-    ## *     <dbl> <int> <dbl>
+    ##       <dbl> <int> <dbl>
     ## 1         0    28 0.289
     ## 2         1    69 0.711
 
@@ -1446,9 +1252,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_black     n    per
-    ## *     <dbl> <int>  <dbl>
+    ##       <dbl> <int>  <dbl>
     ## 1         0    93 0.959 
     ## 2         1     4 0.0412
 
@@ -1458,9 +1264,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_asian     n   per
-    ## *     <dbl> <int> <dbl>
+    ##       <dbl> <int> <dbl>
     ## 1         0    76 0.784
     ## 2         1    21 0.216
 
@@ -1470,9 +1276,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_anative     n    per
-    ## *       <dbl> <int>  <dbl>
+    ##         <dbl> <int>  <dbl>
     ## 1           0    95 0.979 
     ## 2           1     2 0.0206
 
@@ -1482,9 +1288,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 1 x 3
+    ## # A tibble: 1 × 3
     ##   mom_pnative     n   per
-    ## *       <dbl> <int> <dbl>
+    ##         <dbl> <int> <dbl>
     ## 1           0    97     1
 
 ``` r
@@ -1493,9 +1299,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_other_race     n    per
-    ## *          <dbl> <int>  <dbl>
+    ##            <dbl> <int>  <dbl>
     ## 1              0    92 0.948 
     ## 2              1     5 0.0515
 
@@ -1505,9 +1311,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 1 x 3
+    ## # A tibble: 1 × 3
     ##   mom_decline_race     n   per
-    ## *            <dbl> <int> <dbl>
+    ##              <dbl> <int> <dbl>
     ## 1                0    97     1
 
 ``` r
@@ -1516,9 +1322,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   mom_latinx     n   per
-    ## *      <dbl> <int> <dbl>
+    ##        <dbl> <int> <dbl>
     ## 1          0    80 0.825
     ## 2          1    17 0.175
 
@@ -1528,9 +1334,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   primary_english     n   per
-    ## *           <dbl> <int> <dbl>
+    ##             <dbl> <int> <dbl>
     ## 1               0    26 0.268
     ## 2               1    71 0.732
 
@@ -1540,9 +1346,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 8 x 3
+    ## # A tibble: 8 × 3
     ##   education                                                      n    per
-    ## * <chr>                                                      <int>  <dbl>
+    ##   <chr>                                                      <int>  <dbl>
     ## 1 Associate degree                                               5 0.0515
     ## 2 Bachelor's degree                                             25 0.258 
     ## 3 Graduate degree                                               54 0.557 
@@ -1565,9 +1371,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 3 x 3
+    ## # A tibble: 3 × 3
     ##   education_re          n   per
-    ## * <chr>             <int> <dbl>
+    ##   <chr>             <int> <dbl>
     ## 1 < 4yr college        18 0.186
     ## 2 Bachelor's degree    25 0.258
     ## 3 Graduate degree      54 0.557
@@ -1579,7 +1385,7 @@ df %>%
   arrange(per)
 ```
 
-    ## # A tibble: 11 x 3
+    ## # A tibble: 11 × 3
     ##    annual_income           n    per
     ##    <chr>               <int>  <dbl>
     ##  1 $10,000 or less         1 0.0103
@@ -1600,9 +1406,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 3 x 3
+    ## # A tibble: 3 × 3
     ##   `inr_fpl <= 2`     n    per
-    ## * <lgl>          <int>  <dbl>
+    ##   <lgl>          <int>  <dbl>
     ## 1 FALSE             83 0.856 
     ## 2 TRUE              10 0.103 
     ## 3 NA                 4 0.0412
@@ -1613,9 +1419,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 5 x 3
+    ## # A tibble: 5 × 3
     ##   marital_status            n    per
-    ## * <chr>                 <int>  <dbl>
+    ##   <chr>                 <int>  <dbl>
     ## 1 Divorced                  1 0.0103
     ## 2 Living with partner       5 0.0515
     ## 3 Married                  88 0.907 
@@ -1628,9 +1434,9 @@ df %>%
   mutate(per = n / sum(n))
 ```
 
-    ## # A tibble: 2 x 3
+    ## # A tibble: 2 × 3
     ##   child_male     n   per
-    ## *      <dbl> <int> <dbl>
+    ##        <dbl> <int> <dbl>
     ## 1          0    46 0.474
     ## 2          1    51 0.526
 
@@ -1653,13 +1459,7 @@ apca_corr <-
   correlate(method = "spearman", use = "pairwise.complete.obs") %>% 
   shave(upper = FALSE) %>% 
   fashion()
-```
 
-    ## 
-    ## Correlation method: 'spearman'
-    ## Missing treated using: 'pairwise.complete.obs'
-
-``` r
 apca_corr
 ```
 
@@ -1702,6 +1502,13 @@ SpearmanRho(df$parent_num_childhood, df$child_num_dir_types, conf.level = .95)
     ## 0.3049930 0.1123839 0.4755131
 
 ``` r
+SpearmanRho(df$parent_num_childhood, df$child_num_wit_types, conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3497108 0.1615320 0.5133508
+
+``` r
 SpearmanRho(df$parent_num_precon, df$child_num_dir_types, conf.level = .95)
 ```
 
@@ -1709,11 +1516,25 @@ SpearmanRho(df$parent_num_precon, df$child_num_dir_types, conf.level = .95)
     ##  0.18693391 -0.01299596  0.37249161
 
 ``` r
+SpearmanRho(df$parent_num_precon, df$child_num_wit_types, conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ##  0.12181679 -0.07956156  0.31364195
+
+``` r
 SpearmanRho(df$preg_num_types, df$child_num_dir_types, conf.level = .95)
 ```
 
     ##       rho    lwr.ci    upr.ci 
     ## 0.3246606 0.1338846 0.4922329
+
+``` r
+SpearmanRho(df$preg_num_types, df$child_num_wit_types, conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.5016668 0.3358222 0.6373428
 
 ``` r
 SpearmanRho(df$since_child_num_types, df$child_num_dir_types, conf.level = .95)
@@ -1857,7 +1678,7 @@ apca_corr_plot %>%
 ``` r
 ggsave(
   "~/Box/lucy_king_files/MoD/APCA/figures/correlations.png",
-  dpi = 500,
+  dpi = 1000,
   height = 5,
   width = 7.5
 )
@@ -1866,8 +1687,9 @@ ggsave(
 ``` r
 df %>% 
   dplyr::select(
+    total_problems_total,
     cesd_total,
-    bai_total_W,
+    bai_total,
     inr_fpl,
     mom_age,
     child_age
@@ -1877,16 +1699,20 @@ df %>%
   fashion()
 ```
 
-    ## 
-    ## Correlation method: 'pearson'
-    ## Missing treated using: 'complete.obs'
-
-    ##          term cesd_total bai_total_W inr_fpl mom_age child_age
-    ## 1  cesd_total                    .69    -.07    -.15       .12
-    ## 2 bai_total_W                           -.21    -.23       .02
-    ## 3     inr_fpl                                    .26       .11
-    ## 4     mom_age                                              .33
-    ## 5   child_age
+    ##                   term total_problems_total cesd_total bai_total inr_fpl
+    ## 1 total_problems_total                             .30       .23     .00
+    ## 2           cesd_total                                       .70    -.07
+    ## 3            bai_total                                              -.15
+    ## 4              inr_fpl                                                  
+    ## 5              mom_age                                                  
+    ## 6            child_age                                                  
+    ##   mom_age child_age
+    ## 1     .02       .09
+    ## 2    -.14       .12
+    ## 3    -.21       .04
+    ## 4     .24       .13
+    ## 5               .35
+    ## 6
 
 ``` r
 cor.test(df$bai_total, df$cesd_total)
@@ -1937,40 +1763,6 @@ cor.test(df$mom_age, df$bai_total)
     ## -0.2226661
 
 ``` r
-df %>% 
-  dplyr::select(
-    total_problems_total,
-    bai_total_W,
-    cesd_total,
-    inr_fpl,
-    mom_age,
-    child_age
-  ) %>% 
-  correlate(method = "pearson", use = "complete.obs") %>% 
-  shave(upper = FALSE) %>% 
-  fashion()
-```
-
-    ## 
-    ## Correlation method: 'pearson'
-    ## Missing treated using: 'complete.obs'
-
-    ##                   term total_problems_total bai_total_W cesd_total inr_fpl
-    ## 1 total_problems_total                              .23        .30     .00
-    ## 2          bai_total_W                                         .69    -.19
-    ## 3           cesd_total                                                -.07
-    ## 4              inr_fpl                                                    
-    ## 5              mom_age                                                    
-    ## 6            child_age                                                    
-    ##   mom_age child_age
-    ## 1     .02       .09
-    ## 2    -.22       .01
-    ## 3    -.14       .12
-    ## 4     .24       .13
-    ## 5               .35
-    ## 6
-
-``` r
 cor.test(df$total_problems_total, df$cesd_total)
 ```
 
@@ -1987,20 +1779,20 @@ cor.test(df$total_problems_total, df$cesd_total)
     ## 0.2954673
 
 ``` r
-cor.test(df$total_problems_total, df$bai_total_W)
+cor.test(df$total_problems_total, df$bai_total)
 ```
 
     ## 
     ##  Pearson's product-moment correlation
     ## 
-    ## data:  df$total_problems_total and df$bai_total_W
-    ## t = 2.3022, df = 93, p-value = 0.02355
+    ## data:  df$total_problems_total and df$bai_total
+    ## t = 2.3477, df = 93, p-value = 0.02101
     ## alternative hypothesis: true correlation is not equal to 0
     ## 95 percent confidence interval:
-    ##  0.03216788 0.41435681
+    ##  0.03674128 0.41814230
     ## sample estimates:
     ##       cor 
-    ## 0.2322055
+    ## 0.2365328
 
 ## t-tests
 
@@ -2013,7 +1805,7 @@ t.test(df$parent_num_childhood ~ df$mom_poc)
     ## 
     ## data:  df$parent_num_childhood by df$mom_poc
     ## t = -0.27433, df = 77.825, p-value = 0.7846
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -1.481171  1.122423
     ## sample estimates:
@@ -2029,7 +1821,7 @@ t.test(df$parent_num_childhood ~ df$mom_latinx)
     ## 
     ## data:  df$parent_num_childhood by df$mom_latinx
     ## t = -0.78662, df = 22.916, p-value = 0.4396
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -2.591965  1.164024
     ## sample estimates:
@@ -2045,7 +1837,7 @@ t.test(df$parent_num_precon ~ df$mom_poc)
     ## 
     ## data:  df$parent_num_precon by df$mom_poc
     ## t = 0.45992, df = 60.678, p-value = 0.6472
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.8771512  1.4011004
     ## sample estimates:
@@ -2061,7 +1853,7 @@ t.test(df$parent_num_precon ~ df$mom_latinx)
     ## 
     ## data:  df$parent_num_precon by df$mom_latinx
     ## t = -1.0197, df = 19.626, p-value = 0.3203
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -2.7074601  0.9309895
     ## sample estimates:
@@ -2077,7 +1869,7 @@ t.test(df$preg_num_types ~ df$mom_poc)
     ## 
     ## data:  df$preg_num_types by df$mom_poc
     ## t = 0.43034, df = 71.811, p-value = 0.6682
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.5770098  0.8947029
     ## sample estimates:
@@ -2093,7 +1885,7 @@ t.test(df$preg_num_types ~ df$mom_latinx)
     ## 
     ## data:  df$preg_num_types by df$mom_latinx
     ## t = -0.51902, df = 21.138, p-value = 0.6091
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -1.416912  0.850735
     ## sample estimates:
@@ -2109,7 +1901,7 @@ t.test(df$preg_num_types ~ df$child_male)
     ## 
     ## data:  df$preg_num_types by df$child_male
     ## t = -0.32299, df = 94.462, p-value = 0.7474
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.8591007  0.6186914
     ## sample estimates:
@@ -2125,7 +1917,7 @@ t.test(df$since_child_num_types ~ df$mom_poc)
     ## 
     ## data:  df$since_child_num_types by df$mom_poc
     ## t = 0.95841, df = 61.336, p-value = 0.3416
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.6041302  1.7165447
     ## sample estimates:
@@ -2141,7 +1933,7 @@ t.test(df$since_child_num_types ~ df$mom_latinx)
     ## 
     ## data:  df$since_child_num_types by df$mom_latinx
     ## t = 0.64568, df = 26.293, p-value = 0.5241
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.9208394  1.7649570
     ## sample estimates:
@@ -2157,7 +1949,7 @@ t.test(df$since_child_num_types ~ df$child_male)
     ## 
     ## data:  df$since_child_num_types by df$child_male
     ## t = -0.1691, df = 94.867, p-value = 0.8661
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -1.1839128  0.9980645
     ## sample estimates:
@@ -2173,7 +1965,7 @@ t.test(df$child_num_wit_types ~ df$mom_poc)
     ## 
     ## data:  df$child_num_wit_types by df$mom_poc
     ## t = 0.18911, df = 47.68, p-value = 0.8508
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.6545094  0.7903842
     ## sample estimates:
@@ -2189,7 +1981,7 @@ t.test(df$child_num_wit_types ~ df$mom_latinx)
     ## 
     ## data:  df$child_num_wit_types by df$mom_latinx
     ## t = 0.55488, df = 24.563, p-value = 0.584
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.5769478  1.0019478
     ## sample estimates:
@@ -2205,7 +1997,7 @@ t.test(df$child_num_wit_types ~ df$child_male)
     ## 
     ## data:  df$child_num_wit_types by df$child_male
     ## t = -0.55191, df = 94.986, p-value = 0.5823
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.7720600  0.4361691
     ## sample estimates:
@@ -2221,7 +2013,7 @@ t.test(df$child_num_dir_types ~ df$mom_poc)
     ## 
     ## data:  df$child_num_dir_types by df$mom_poc
     ## t = 0.79416, df = 51.076, p-value = 0.4308
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.2591221  0.5983205
     ## sample estimates:
@@ -2237,7 +2029,7 @@ t.test(df$child_num_dir_types ~ df$mom_latinx)
     ## 
     ## data:  df$child_num_dir_types by df$mom_latinx
     ## t = 1.8452, df = 37.466, p-value = 0.07293
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.03230546  0.69407017
     ## sample estimates:
@@ -2253,7 +2045,7 @@ t.test(df$child_num_dir_types ~ df$child_male)
     ## 
     ## data:  df$child_num_dir_types by df$child_male
     ## t = -0.90646, df = 94.532, p-value = 0.367
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
     ##  -0.5385067  0.2009108
     ## sample estimates:
@@ -2261,148 +2053,148 @@ t.test(df$child_num_dir_types ~ df$child_male)
     ##       0.4782609       0.6470588
 
 ``` r
-t.test(df$cesd_total_W ~ df$mom_poc)
+t.test(df$cesd_total ~ df$mom_poc)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$cesd_total_W by df$mom_poc
-    ## t = 1.4461, df = 73.396, p-value = 0.1524
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$cesd_total by df$mom_poc
+    ## t = 1.3758, df = 71.073, p-value = 0.1732
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.737636  4.640265
+    ##  -0.8559591  4.6663809
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##       10.279684        8.328369
+    ##       10.292308        8.387097
 
 ``` r
-t.test(df$cesd_total_W ~ df$mom_latinx)
+t.test(df$cesd_total ~ df$mom_latinx)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$cesd_total_W by df$mom_latinx
-    ## t = -1.6283, df = 22.118, p-value = 0.1176
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$cesd_total by df$mom_latinx
+    ## t = -1.614, df = 22.039, p-value = 0.1208
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -7.0095762  0.8425994
+    ##  -7.1028569  0.8854332
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        9.103537       12.187026
+    ##        9.126582       12.235294
 
 ``` r
-t.test(df$cesd_total_W ~ df$child_male)
+t.test(df$cesd_total ~ df$child_male)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$cesd_total_W by df$child_male
-    ## t = 0.063262, df = 83.786, p-value = 0.9497
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$cesd_total by df$child_male
+    ## t = 0.1035, df = 82.731, p-value = 0.9178
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -2.709417  2.887458
+    ##  -2.690954  2.986378
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        9.696864        9.607843
+    ##        9.755556        9.607843
 
 ``` r
-t.test(df$bai_total_W ~ df$mom_poc)
+t.test(df$bai_total ~ df$mom_poc)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$bai_total_W by df$mom_poc
-    ## t = 1.0892, df = 69.259, p-value = 0.2798
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$bai_total by df$mom_poc
+    ## t = 0.87262, df = 64.723, p-value = 0.3861
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -0.9367692  3.1901134
+    ##  -1.396963  3.564705
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        5.413917        4.287245
+    ##        5.600000        4.516129
 
 ``` r
-t.test(df$bai_total_W ~ df$mom_latinx)
+t.test(df$bai_total ~ df$mom_latinx)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$bai_total_W by df$mom_latinx
-    ## t = -0.98561, df = 20.837, p-value = 0.3356
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$bai_total by df$mom_latinx
+    ## t = -0.80301, df = 23.348, p-value = 0.4301
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -4.702934  1.679488
+    ##  -4.534688  1.997086
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        4.782394        6.294118
+    ##        5.025316        6.294118
 
 ``` r
-t.test(df$bai_total_W ~ df$child_male)
+t.test(df$bai_total ~ df$child_male)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$bai_total_W by df$child_male
-    ## t = 0.066056, df = 87.909, p-value = 0.9475
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$bai_total by df$child_male
+    ## t = -0.0086234, df = 91.597, p-value = 0.9931
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -2.007824  2.145887
+    ##  -2.419120  2.398205
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        5.086768        5.017737
+    ##        5.244444        5.254902
 
 ``` r
-t.test(df$total_problems_total_W ~ df$mom_poc)
+t.test(df$total_problems_total ~ df$mom_poc)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$total_problems_total_W by df$mom_poc
-    ## t = -0.1469, df = 65.326, p-value = 0.8837
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$total_problems_total by df$mom_poc
+    ## t = -0.13431, df = 65.78, p-value = 0.8936
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -7.062090  6.094265
+    ##  -7.039469  6.152124
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        25.12899        25.61290
+    ##        25.16923        25.61290
 
 ``` r
-t.test(df$total_problems_total_W ~ df$mom_latinx)
+t.test(df$total_problems_total ~ df$mom_latinx)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$total_problems_total_W by df$mom_latinx
-    ## t = -0.68953, df = 21.963, p-value = 0.4977
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$total_problems_total by df$mom_latinx
+    ## t = -0.68092, df = 22.06, p-value = 0.503
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -11.553727   5.788337
+    ##  -11.52885   5.82885
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        24.80481        27.68750
+    ##         24.8375         27.6875
 
 ``` r
-t.test(df$total_problems_total_W ~ df$child_male)
+t.test(df$total_problems_total ~ df$child_male)
 ```
 
     ## 
     ##  Welch Two Sample t-test
     ## 
-    ## data:  df$total_problems_total_W by df$child_male
-    ## t = -0.43879, df = 92.232, p-value = 0.6618
-    ## alternative hypothesis: true difference in means is not equal to 0
+    ## data:  df$total_problems_total by df$child_male
+    ## t = -0.41856, df = 91.953, p-value = 0.6765
+    ## alternative hypothesis: true difference in means between group 0 and group 1 is not equal to 0
     ## 95 percent confidence interval:
-    ##  -7.781657  4.965327
+    ##  -7.763344  5.060735
     ## sample estimates:
     ## mean in group 0 mean in group 1 
-    ##        24.55183        25.96000
+    ##         24.6087         25.9600
 
 ## Additional APCA descriptives
 
@@ -2421,7 +2213,7 @@ df %>%
   )
 ```
 
-    ## # A tibble: 1 x 5
+    ## # A tibble: 1 × 5
     ##    mean median    sd   min   max
     ##   <dbl>  <dbl> <dbl> <dbl> <dbl>
     ## 1 0.426    0.4 0.387     0     1
@@ -2435,6 +2227,7 @@ df %>%
 #### Spearman’s correlations
 
 ``` r
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$ctq_total_W, use = "complete.obs", conf.level = .95)
 ```
 
@@ -2442,6 +2235,15 @@ SpearmanRho(df$parent_num_childhood_W, df$ctq_total_W, use = "complete.obs", con
     ## 0.5777309 0.4266642 0.6974351
 
 ``` r
+# raw
+SpearmanRho(df$parent_num_childhood, df$ctq_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.5780311 0.4270328 0.6976665
+
+``` r
+# winsorized
 SpearmanRho(df$parent_num_precon, df$ctq_total_W, use = "complete.obs", conf.level = .95)
 ```
 
@@ -2462,39 +2264,57 @@ SpearmanRho(df$since_child_num_types_W, df$ctq_total_W, use = "complete.obs", co
     ##       rho    lwr.ci    upr.ci 
     ## 0.3057105 0.1120949 0.4769630
 
+``` r
+# raw
+SpearmanRho(df$parent_num_precon, df$ctq_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.4040391 0.2214952 0.5592255
+
+``` r
+SpearmanRho(df$preg_num_types, df$ctq_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ##  0.19029644 -0.01059367  0.37642125
+
+``` r
+SpearmanRho(df$since_child_num_types, df$ctq_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3063293 0.1127691 0.4774903
+
 #### Bayes Factors
 
 ``` r
-childhood_ctq <- correlationBF(df$parent_num_childhood_W, df$ctq_total_W)
-```
+# winsorized
+##compute Bayesian correlation 
+childhood_ctqW <- correlationBF(df$parent_num_childhood_W, df$ctq_total_W)
+## obtain bayes factor for alternative hypothesis that association is not 0 vs. null hypothesis that it is 0
+childhood_ctqW <- describe_posterior(childhood_ctqW, ci = 0.95)$BF
 
-    ## Ignored 1 rows containing missing observations.
+precon_ctqW <- correlationBF(df$parent_num_precon, df$ctq_total_W)
+precon_ctqW <- describe_posterior(precon_ctqW, ci = 0.95)$BF
 
-``` r
+preg_ctqW <- correlationBF(df$preg_num_types_W, df$ctq_total_W)
+preg_ctqW <- describe_posterior(preg_ctqW, ci = 0.95)$BF
+
+since_ctqW <- correlationBF(df$since_child_num_types_W, df$ctq_total_W)
+since_ctqW <-describe_posterior(since_ctqW, ci = 0.95)$BF
+
+# raw
+childhood_ctq <- correlationBF(df$parent_num_childhood, df$ctq_total)
 childhood_ctq <- describe_posterior(childhood_ctq, ci = 0.95)$BF
 
-precon_ctq <- correlationBF(df$parent_num_precon, df$ctq_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+precon_ctq <- correlationBF(df$parent_num_precon, df$ctq_total)
 precon_ctq <- describe_posterior(precon_ctq, ci = 0.95)$BF
 
-preg_ctq <- correlationBF(df$preg_num_types_W, df$ctq_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+preg_ctq <- correlationBF(df$preg_num_types, df$ctq_total)
 preg_ctq <- describe_posterior(preg_ctq, ci = 0.95)$BF
 
-since_ctq <- correlationBF(df$since_child_num_types_W, df$ctq_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+since_ctq <- correlationBF(df$since_child_num_types, df$ctq_total)
 since_ctq <-describe_posterior(since_ctq, ci = 0.95)$BF
 
 con_BFs <-
@@ -2504,6 +2324,12 @@ con_BFs <-
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
+    ),
+    BF_ctqW = c(
+      childhood_ctqW,
+      precon_ctqW,
+      preg_ctqW,
+      since_ctqW
     ),
     BF_ctq = c(
       childhood_ctq,
@@ -2516,13 +2342,13 @@ con_BFs <-
 con_BFs
 ```
 
-    ## # A tibble: 4 x 2
-    ##   key                         BF_ctq
-    ##   <chr>                        <dbl>
-    ## 1 parent_num_childhood  26759799.   
-    ## 2 parent_num_precon          469.   
-    ## 3 preg_num_types               1.25 
-    ## 4 since_child_num_types        0.955
+    ## # A tibble: 4 × 3
+    ##   key                        BF_ctqW      BF_ctq
+    ##   <chr>                        <dbl>       <dbl>
+    ## 1 parent_num_childhood  26759799.    1589983.   
+    ## 2 parent_num_precon          469.        144.   
+    ## 3 preg_num_types               1.25        0.784
+    ## 4 since_child_num_types        0.955       0.588
 
 Initially identified overdispersion using a poisson model. Used negative
 binomial regression to account for this.
@@ -2530,9 +2356,17 @@ binomial regression to account for this.
 #### Negative binomial model
 
 ``` r
-glm.1 <- glm.nb(
+# winsorized 
+glmW.1 <- glm.nb(
   parent_num_childhood_W  ~ 
     scale(ctq_total_W, scale = FALSE),
+  data = df
+)
+
+# raw
+glm.1 <- glm.nb(
+  parent_num_childhood  ~ 
+    scale(ctq_total, scale = FALSE),
   data = df
 )
 ```
@@ -2540,29 +2374,24 @@ glm.1 <- glm.nb(
 #### Diagnostics
 
 ``` r
-check_model(glm.1)
+# winsorized
+check_outliers(glmW.1)
 ```
 
-    ## Loading required namespace: qqplotr
-
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 96 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-check_heteroscedasticity(glm.1)
+# raw
+check_outliers(glm.1)
 ```
 
-    ## OK: Error variance appears to be homoscedastic (p = 0.615).
+    ## Warning: 1 outliers detected (cases 73).
 
 #### Performance
 
 ``` r
-model_performance(glm.1)
+# winsorized
+model_performance(glmW.1)
 ```
 
     ## # Indices of model performance
@@ -2571,11 +2400,23 @@ model_performance(glm.1)
     ## ---------------------------------------------------------------------------------
     ## 428.053 | 435.746 |           0.411 | 2.973 | 1.052 |    -2.200 |           0.093
 
+``` r
+# raw
+model_performance(glm.1)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC | Nagelkerke's R2 |  RMSE | Sigma | Score_log | Score_spherical
+    ## ---------------------------------------------------------------------------------
+    ## 434.972 | 442.665 |           0.345 | 3.998 | 1.045 |    -2.234 |           0.093
+
 #### Parameters
 
 ``` r
+# winsorized
 model_parameters(
-  glm.1,
+  glmW.1,
   exponentiate = TRUE
 ) 
 ```
@@ -2585,9 +2426,57 @@ model_parameters(
     ## (Intercept) | 3.27 |     0.26 | [2.80, 3.81] | 15.01 | < .001
     ## ctq_total_W | 1.04 | 5.98e-03 | [1.02, 1.05] |  6.30 | < .001
 
+``` r
+# raw
+model_parameters(
+  glm.1,
+  exponentiate = TRUE
+) 
+```
+
+    ## Parameter   |  IRR |       SE |       95% CI |     z |      p
+    ## -------------------------------------------------------------
+    ## (Intercept) | 3.34 |     0.27 | [2.84, 3.92] | 14.72 | < .001
+    ## ctq_total   | 1.03 | 4.81e-03 | [1.02, 1.04] |  5.94 | < .001
+
 For each 1-unit increase in CTQ, the expected log count of APCA maternal
-cumulative adversity increases by .02. For each 1-unit increase in CTQ,
-the incidence rate for maternal cumulative adversity increased by 2%.
+cumulative adversity increases by .03. For each 1-unit increase in CTQ,
+the incidence rate for maternal cumulative adversity increased by 3%.
+
+``` r
+# examine predicted values from regression with raw data
+df_new_raw <-
+  df %>% 
+  dplyr::select(
+    ctq_total
+  ) 
+
+# generate predicted values
+df_new_raw$pred <-
+  predict(
+    glm.1,
+    df_new_raw,
+    type = "response"
+  )
+
+df_new_raw %>% 
+  arrange(desc(ctq_total))
+```
+
+    ## # A tibble: 97 × 2
+    ##    ctq_total  pred
+    ##        <dbl> <dbl>
+    ##  1        94 36.9 
+    ##  2        66 17.0 
+    ##  3        50 10.9 
+    ##  4        38  7.79
+    ##  5        32  6.59
+    ##  6        31  6.41
+    ##  7        28  5.90
+    ##  8        27  5.74
+    ##  9        23  5.14
+    ## 10        21  4.86
+    ## # … with 87 more rows
 
 #### Plot expected counts
 
@@ -2602,7 +2491,7 @@ df_new <-
 # generate predicted values
 df_new$pred <-
   predict(
-    glm.1,
+    glmW.1,
     df_new,
     type = "response"
   )
@@ -2619,23 +2508,16 @@ ctq_plot <-
     alpha = 1/3,
     color = "black"
   ) +
-  scale_y_continuous(breaks = seq.int(0, 25, 5)) +
-  scale_x_continuous(breaks = seq.int(0, 50, 5)) +
+  scale_y_continuous(breaks = seq.int(0, 15, 5)) +
+  scale_x_continuous(breaks = seq.int(0, 100, 10)) +
   theme_mod +
   labs(
-    title = "Convergent validity",
     x = "CTQ-SF\nMaternal childhood maltreatment",
     y = "APCA\nMaternal childhood adversity"
   )
 
 ctq_plot
 ```
-
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 1 rows containing missing values (geom_point).
 
 ![](apca_manuscript_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
@@ -2648,17 +2530,12 @@ ggsave(
 )
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
 ### Life events measured in pregnancy
 
 #### Spearman’s correlations
 
 ``` r
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$prenatal_life_events_W, use = "complete.obs", conf.level = .95)
 ```
 
@@ -2672,29 +2549,48 @@ SpearmanRho(df$parent_num_precon, df$prenatal_life_events_W, use = "complete.obs
     ##        rho     lwr.ci     upr.ci 
     ## 0.27901929 0.06460591 0.46880722
 
+``` r
+# raw
+SpearmanRho(df$parent_num_childhood, df$prenatal_life_events, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.29007860 0.07657963 0.47814314
+
+``` r
+SpearmanRho(df$parent_num_precon, df$prenatal_life_events, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.27901929 0.06460591 0.46880722
+
 #### Bayes Factors
 
 ``` r
-childhood_le <- correlationBF(df$parent_num_childhood_W, df$prenatal_life_events_W)
-```
+# winsorized
+childhood_leW <- correlationBF(df$parent_num_childhood_W, df$prenatal_life_events_W)
+childhood_leW  <- describe_posterior(childhood_leW, ci = 0.95)$BF
 
-    ## Ignored 16 rows containing missing observations.
+precon_leW  <- correlationBF(df$parent_num_precon, df$prenatal_life_events_W)
+precon_leW  <- describe_posterior(precon_leW, ci = 0.95)$BF
 
-``` r
+# raw
+childhood_le <- correlationBF(df$parent_num_childhood, df$prenatal_life_events)
 childhood_le  <- describe_posterior(childhood_le, ci = 0.95)$BF
 
-precon_le  <- correlationBF(df$parent_num_precon, df$prenatal_life_events_W)
-```
-
-    ## Ignored 16 rows containing missing observations.
-
-``` r
+precon_le  <- correlationBF(df$parent_num_precon, df$prenatal_life_events)
 precon_le  <- describe_posterior(precon_le, ci = 0.95)$BF
 
 
 con_BFs <-
   con_BFs %>% 
   cbind(
+    BF_leW = c(
+      childhood_leW,
+      precon_leW,
+      NA_real_,
+      NA_real_
+    ),
     BF_le = c(
       childhood_le,
       precon_le,
@@ -2706,24 +2602,38 @@ con_BFs <-
 con_BFs
 ```
 
-    ##                     key           BF_ctq     BF_le
-    ## 1  parent_num_childhood 26759799.2827911  4.388674
-    ## 2     parent_num_precon      469.2980266 11.532945
-    ## 3        preg_num_types        1.2469527        NA
-    ## 4 since_child_num_types        0.9546684        NA
+    ##                     key          BF_ctqW          BF_ctq    BF_leW     BF_le
+    ## 1  parent_num_childhood 26759799.2827911 1589982.5888647  4.388674  6.333523
+    ## 2     parent_num_precon      469.2980266     143.6740562 11.532945 31.637773
+    ## 3        preg_num_types        1.2469527       0.7836931        NA        NA
+    ## 4 since_child_num_types        0.9546684       0.5877467        NA        NA
 
 #### Negative binomial model
 
 ``` r
-glm.2 <- glm.nb(
+# winsorized 
+glmW.2 <- glm.nb(
   parent_num_childhood_W  ~ 
     scale(prenatal_life_events_W, scale = FALSE),
   data = df
 )
 
-glm.3 <- glm.nb(
+glmW.3 <- glm.nb(
   parent_num_precon  ~ 
     scale(prenatal_life_events_W, scale = FALSE),
+  data = df
+)
+
+# raw 
+glm.2 <- glm.nb(
+  parent_num_childhood  ~ 
+    scale(prenatal_life_events, scale = FALSE),
+  data = df
+)
+
+glm.3 <- glm.nb(
+  parent_num_precon  ~ 
+    scale(prenatal_life_events, scale = FALSE),
   data = df
 )
 ```
@@ -2731,44 +2641,36 @@ glm.3 <- glm.nb(
 #### Diagnostics
 
 ``` r
-check_model(glm.2)
+# winsorized
+check_outliers(glmW.2)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 81 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-check_heteroscedasticity(glm.2)
+check_outliers(glmW.3)
 ```
 
-    ## OK: Error variance appears to be homoscedastic (p = 0.790).
+    ## OK: No outliers detected.
 
 ``` r
-check_model(glm.3)
+# raw
+check_outliers(glm.2)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 81 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-check_heteroscedasticity(glm.3)
+check_outliers(glm.3)
 ```
 
-    ## OK: Error variance appears to be homoscedastic (p = 0.231).
+    ## OK: No outliers detected.
 
 #### Performance
 
 ``` r
-model_performance(glm.2)
+# winsorized
+model_performance(glmW.2)
 ```
 
     ## # Indices of model performance
@@ -2778,7 +2680,7 @@ model_performance(glm.2)
     ## 375.976 | 383.159 |           0.111 | 2.924 | 1.057 |    -2.284 |           0.101
 
 ``` r
-model_performance(glm.3)
+model_performance(glmW.3)
 ```
 
     ## # Indices of model performance
@@ -2787,11 +2689,33 @@ model_performance(glm.3)
     ## ---------------------------------------------------------------------------------
     ## 349.711 | 356.894 |           0.107 | 2.351 | 1.110 |    -2.125 |           0.101
 
+``` r
+# raw
+model_performance(glm.2)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC | Nagelkerke's R2 |  RMSE | Sigma | Score_log | Score_spherical
+    ## ---------------------------------------------------------------------------------
+    ## 375.783 | 382.966 |           0.114 | 2.908 | 1.057 |    -2.283 |           0.101
+
+``` r
+model_performance(glm.3)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC | Nagelkerke's R2 |  RMSE | Sigma | Score_log | Score_spherical
+    ## ---------------------------------------------------------------------------------
+    ## 349.083 | 356.266 |           0.118 | 2.305 | 1.112 |    -2.120 |           0.101
+
 #### Parameters
 
 ``` r
+# winsorized 
 model_parameters(
-  glm.2,
+  glmW.2,
   exponentiate = TRUE
 ) 
 ```
@@ -2803,7 +2727,7 @@ model_parameters(
 
 ``` r
 model_parameters(
-  glm.3,
+  glmW.3,
   exponentiate = TRUE
 ) 
 ```
@@ -2813,82 +2737,39 @@ model_parameters(
     ## (Intercept)            | 2.67 | 0.28 | [2.18, 3.29] | 9.38 | < .001
     ## prenatal_life_events_W | 1.17 | 0.07 | [1.04, 1.33] | 2.49 | 0.013
 
-For each 1-unit increase in CTQ, the expected log count of APCA maternal
-cumulative adversity increases by .02. For each 1-unit increase in CTQ,
-the incidence rate for maternal cumulative adversity increased by 2%.
-
-#### Plot expected counts
-
 ``` r
-# create new dataset with only CTQ
-df_new <-
-  df %>% 
-  dplyr::select(
-    ctq_total_W
-  ) 
-
-# generate predicted values
-df_new$pred <-
-  predict(
-    glm.1,
-    df_new,
-    type = "response"
-  )
-
-# plot
-ctq_plot <-
-  df_new %>% 
-  ggplot(aes(ctq_total_W, pred)) +
-  geom_smooth(color = "black", size = 3) +
-  geom_jitter2(
-    data = df,
-    aes(ctq_total_W, parent_num_childhood_W),
-    size = 5, 
-    alpha = 1/3,
-    color = "black"
-  ) +
-  scale_y_continuous(breaks = seq.int(0, 14, 2)) +
-  scale_x_continuous(breaks = seq.int(0, 50, 5)) +
-  theme_mod +
-  labs(
-    title = "Convergent validity",
-    x = "CTQ-SF\nMaternal childhood maltreatment",
-    y = "APCA\nMaternal childhood adversity"
-  )
-
-ctq_plot
+# raw
+model_parameters(
+  glm.2,
+  exponentiate = TRUE
+) 
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+    ## Parameter            |  IRR |   SE |       95% CI |     z |      p
+    ## ------------------------------------------------------------------
+    ## (Intercept)          | 3.44 | 0.31 | [2.88, 4.11] | 13.60 | < .001
+    ## prenatal_life_events | 1.14 | 0.06 | [1.03, 1.26] |  2.59 | 0.010
 
 ``` r
-ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_num_types.png",
-  dpi = 500,
-  height = 5,
-  width = 6
-)
+model_parameters(
+  glm.3,
+  exponentiate = TRUE
+) 
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+    ## Parameter            |  IRR |   SE |       95% CI |    z |      p
+    ## -----------------------------------------------------------------
+    ## (Intercept)          | 2.67 | 0.28 | [2.18, 3.27] | 9.42 | < .001
+    ## prenatal_life_events | 1.16 | 0.07 | [1.04, 1.30] | 2.57 | 0.010
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
-## Discriminant validity
+## Criterion validity
 
 ### BCES
 
 #### Spearman’s correlations
 
 ``` r
+# winsorized
 SpearmanRho(df$parent_num_childhood_W, df$bces_total_W, use = "complete.obs", conf.level = .95)
 ```
 
@@ -2916,39 +2797,63 @@ SpearmanRho(df$since_child_num_types_W, df$bces_total_W, use = "complete.obs", c
     ##        rho     lwr.ci     upr.ci 
     ## -0.1093061 -0.3031487  0.0932228
 
+``` r
+# raw
+SpearmanRho(df$parent_num_childhood, df$bces_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## -0.3103403 -0.4809049 -0.1171429
+
+``` r
+SpearmanRho(df$parent_num_precon, df$bces_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ## -0.26144416 -0.43892354 -0.06433014
+
+``` r
+SpearmanRho(df$preg_num_types, df$bces_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ## -0.25572552 -0.43396248 -0.05822472
+
+``` r
+SpearmanRho(df$since_child_num_types, df$bces_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ## -0.10914281 -0.30299866  0.09338658
+
 #### Bayes Factors
 
 ``` r
-childhood_bce <- correlationBF(df$parent_num_childhood_W, df$bces_total_W)
-```
+# winsorized
+childhood_bceW <- correlationBF(df$parent_num_childhood_W, df$bces_total_W)
+childhood_bceW  <- describe_posterior(childhood_bceW, ci = 0.95)$BF
 
-    ## Ignored 1 rows containing missing observations.
+precon_bceW  <- correlationBF(df$parent_num_precon, df$bces_total_W)
+precon_bceW  <- describe_posterior(precon_bceW, ci = 0.95)$BF
 
-``` r
+preg_bceW <- correlationBF(df$preg_num_types_W, df$bces_total_W)
+preg_bceW <- describe_posterior(preg_bceW, ci = 0.95)$BF
+
+since_bceW <- correlationBF(df$since_child_num_types_W, df$bces_total_W)
+since_bceW <-describe_posterior(since_bceW, ci = 0.95)$BF
+
+
+# raw
+childhood_bce <- correlationBF(df$parent_num_childhood, df$bces_total)
 childhood_bce  <- describe_posterior(childhood_bce, ci = 0.95)$BF
 
-precon_bce  <- correlationBF(df$parent_num_precon, df$bces_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+precon_bce  <- correlationBF(df$parent_num_precon, df$bces_total)
 precon_bce  <- describe_posterior(precon_bce, ci = 0.95)$BF
 
-preg_bce <- correlationBF(df$preg_num_types_W, df$bces_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+preg_bce <- correlationBF(df$preg_num_types, df$bces_total)
 preg_bce <- describe_posterior(preg_bce, ci = 0.95)$BF
 
-since_bce <- correlationBF(df$since_child_num_types_W, df$bces_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+since_bce <- correlationBF(df$since_child_num_types, df$bces_total)
 since_bce <-describe_posterior(since_bce, ci = 0.95)$BF
 
 dis_BFs <-
@@ -2958,6 +2863,12 @@ dis_BFs <-
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
+    ),
+    BF_bceW = c(
+      childhood_bceW,
+      precon_bceW,
+      preg_bceW,
+      since_bceW
     ),
     BF_bce = c(
       childhood_bce,
@@ -2970,20 +2881,28 @@ dis_BFs <-
 dis_BFs
 ```
 
-    ## # A tibble: 4 x 2
-    ##   key                    BF_bce
-    ##   <chr>                   <dbl>
-    ## 1 parent_num_childhood   57.6  
-    ## 2 parent_num_precon     204.   
-    ## 3 preg_num_types         30.7  
-    ## 4 since_child_num_types   0.968
+    ## # A tibble: 4 × 3
+    ##   key                   BF_bceW  BF_bce
+    ##   <chr>                   <dbl>   <dbl>
+    ## 1 parent_num_childhood   57.6    46.9  
+    ## 2 parent_num_precon     204.    370.   
+    ## 3 preg_num_types         30.7     8.20 
+    ## 4 since_child_num_types   0.968   0.787
 
 #### Negative binomial model
 
 ``` r
+# winsorized 
+glmW.4 <- glm.nb(
+  parent_num_childhood_W  ~ 
+    scale(bces_total_W, scale = FALSE),
+  data = df
+)
+
+# raw 
 glm.4 <- glm.nb(
   parent_num_childhood  ~ 
-    scale(bces_total_W, scale = FALSE),
+    scale(bces_total, scale = FALSE),
   data = df
 )
 ```
@@ -2991,38 +2910,34 @@ glm.4 <- glm.nb(
 #### Diagnostics
 
 ``` r
-check_model(glm.4)
+# winsorized
+check_outliers(glmW.4)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
-    ## parametric, : pseudoinverse used at 2.9816
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
-    ## parametric, : neighborhood radius 0.87673
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
-    ## parametric, : reciprocal condition number 0
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
-    ## parametric, : There are other near singularities as well. 0.72443
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 96 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-check_heteroscedasticity(glm.4)
+# raw
+check_outliers(glm.4)
 ```
 
-    ## OK: Error variance appears to be homoscedastic (p = 0.142).
+    ## OK: No outliers detected.
 
 #### Performance
 
 ``` r
+# winsorized
+model_performance(glmW.4)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC | Nagelkerke's R2 |  RMSE | Sigma | Score_log | Score_spherical
+    ## ---------------------------------------------------------------------------------
+    ## 448.636 | 456.329 |           0.147 | 3.060 | 1.056 |    -2.312 |           0.093
+
+``` r
+# raw
 model_performance(glm.4)
 ```
 
@@ -3030,21 +2945,35 @@ model_performance(glm.4)
     ## 
     ## AIC     |     BIC | Nagelkerke's R2 |  RMSE | Sigma | Score_log | Score_spherical
     ## ---------------------------------------------------------------------------------
-    ## 449.580 | 457.273 |           0.156 | 3.120 | 1.055 |    -2.318 |           0.093
+    ## 450.286 | 457.979 |           0.145 | 3.173 | 1.054 |    -2.322 |           0.093
 
 #### Parameters
 
 ``` r
+# winsorized
 model_parameters(
-  glm.4,
+  glmW.4,
   exponentiate = TRUE
 ) 
 ```
 
     ## Parameter    |  IRR |   SE |       95% CI |     z |      p
     ## ----------------------------------------------------------
-    ## (Intercept)  | 3.48 | 0.30 | [2.94, 4.12] | 14.40 | < .001
-    ## bces_total_W | 0.78 | 0.06 | [0.67, 0.90] | -3.23 | 0.001
+    ## (Intercept)  | 3.47 | 0.30 | [2.93, 4.11] | 14.42 | < .001
+    ## bces_total_W | 0.79 | 0.06 | [0.67, 0.91] | -3.15 | 0.002
+
+``` r
+# raw
+model_parameters(
+  glm.4,
+  exponentiate = TRUE
+) 
+```
+
+    ## Parameter   |  IRR |   SE |       95% CI |     z |      p
+    ## ---------------------------------------------------------
+    ## (Intercept) | 3.49 | 0.30 | [2.94, 4.14] | 14.37 | < .001
+    ## bces_total  | 0.80 | 0.06 | [0.69, 0.92] | -3.19 | 0.001
 
 For each 1-unit increase in BCEs, the incidence rate for maternal
 cumulative adversity decreases by 22%.
@@ -3056,7 +2985,7 @@ cumulative adversity decreases by 22%.
 df_new.1 <-
   df %>% 
   dplyr::select(
-    bces_total_W
+    bces_total
   )
 
 # generate predicted values
@@ -3070,34 +2999,27 @@ df_new.1$pred <-
 # plot
 bces_plot <-
   df_new.1 %>% 
-  ggplot(aes(bces_total_W, pred)) +
+  ggplot(aes(bces_total, pred)) +
   geom_smooth(color = "black", size = 3, span = 1) +
   geom_jitter2(
     data = df,
-    aes(bces_total_W, parent_num_childhood_W),
+    aes(bces_total, parent_num_childhood),
     size = 5, 
     alpha = 1/3,
     color = "black"
   ) +
-  scale_y_continuous(breaks = seq.int(0, 15, 2)) +
+  scale_y_continuous(breaks = seq.int(0, 16, 2)) +
   scale_x_continuous(breaks = seq.int(0, 10, 1)) +
   theme_mod +
   labs(
-    title = "Discriminant validity",
     x = "BCEs\n Maternal positive childhood experiences",
-    y = NULL
+    y = "APCA\n Maternal childhood adversity"
   )
 
 bces_plot
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
 
 ``` r
 ggsave(
@@ -3108,12 +3030,6 @@ ggsave(
 )
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
 ### Arrange CTQ and BCEs plots
 
 ``` r
@@ -3122,35 +3038,27 @@ ctq_bces_plots <- arrangeGrob(
   bces_plot, 
   nrow = 1
 )
-```
 
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
-    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 1 rows containing missing values (geom_point).
-
-``` r
 ggsave(
   "~/Box/lucy_king_files/MoD/APCA/figures/ctq_bces_apca_childhood.png",
   ctq_bces_plots,
   dpi = 1000,
   height = 5,
-  width = 10
+  width = 12
 )
 ```
-
-## Concurrent validity
 
 ### CESD
 
 #### Spearman’s correlations
+
+``` r
+# winsorized
+SpearmanRho(df$parent_num_types, df$cesd_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.28411204 0.08867719 0.45848260
 
 ``` r
 SpearmanRho(df$parent_num_childhood_W, df$cesd_total_W, use = "complete.obs", conf.level = .95)
@@ -3180,50 +3088,95 @@ SpearmanRho(df$since_child_num_types_W, df$cesd_total_W, use = "complete.obs", c
     ##        rho     lwr.ci     upr.ci 
     ## 0.26437463 0.06746454 0.44146161
 
+``` r
+# raw
+SpearmanRho(df$parent_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.28362417 0.08815071 0.45806341
+
+``` r
+SpearmanRho(df$parent_num_childhood, df$cesd_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ##  0.13127374 -0.07108301  0.32325216
+
+``` r
+SpearmanRho(df$parent_num_precon, df$cesd_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.27769368 0.08175959 0.45296159
+
+``` r
+SpearmanRho(df$preg_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##         rho      lwr.ci      upr.ci 
+    ## 0.201876852 0.001449577 0.386711250
+
+``` r
+SpearmanRho(df$since_child_num_types, df$cesd_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.26367992 0.06672113 0.44086018
+
 #### Bayes Factors
 
 ``` r
-childhood_cesd <- correlationBF(df$parent_num_childhood_W, df$cesd_total_W)
-```
+# winsorized
+cumulative_cesdW <- correlationBF(df$parent_num_types, df$cesd_total_W)
+cumulative_cesdW <- describe_posterior(cumulative_cesdW, ci = 0.95)$BF
 
-    ## Ignored 1 rows containing missing observations.
+childhood_cesdW <- correlationBF(df$parent_num_childhood_W, df$cesd_total_W)
+childhood_cesdW <- describe_posterior(childhood_cesdW, ci = 0.95)$BF
 
-``` r
+precon_cesdW <- correlationBF(df$parent_num_precon, df$cesd_total_W)
+precon_cesdW <- describe_posterior(precon_cesdW, ci = 0.95)$BF
+
+preg_cesdW <- correlationBF(df$preg_num_types_W, df$cesd_total_W)
+preg_cesdW <- describe_posterior(preg_cesdW, ci = 0.95)$BF
+
+since_cesdW <- correlationBF(df$since_child_num_types_W, df$cesd_total_W)
+since_cesdW <-describe_posterior(since_cesdW, ci = 0.95)$BF
+
+# raw
+cumulative_cesd <- correlationBF(df$parent_num_types, df$cesd_total)
+cumulative_cesd <- describe_posterior(cumulative_cesd, ci = 0.95)$BF
+
+childhood_cesd <- correlationBF(df$parent_num_childhood, df$cesd_total)
 childhood_cesd <- describe_posterior(childhood_cesd, ci = 0.95)$BF
 
-precon_cesd <- correlationBF(df$parent_num_precon, df$cesd_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+precon_cesd <- correlationBF(df$parent_num_precon, df$cesd_total)
 precon_cesd <- describe_posterior(precon_cesd, ci = 0.95)$BF
 
-preg_cesd <- correlationBF(df$preg_num_types_W, df$cesd_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+preg_cesd <- correlationBF(df$preg_num_types, df$cesd_total)
 preg_cesd <- describe_posterior(preg_cesd, ci = 0.95)$BF
 
-since_cesd <- correlationBF(df$since_child_num_types_W, df$cesd_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+since_cesd <- correlationBF(df$since_child_num_types, df$cesd_total)
 since_cesd <-describe_posterior(since_cesd, ci = 0.95)$BF
 
 mp_BFs <-
   tibble(
     key = c(
+      "parent_num_types",
       "parent_num_childhood",
       "parent_num_precon",
       "preg_num_types",
       "since_child_num_types"
     ),
-    BF_cesd = c(
+    BF_cesdW = c(
+      cumulative_cesdW,
+      childhood_cesdW,
+      precon_cesdW,
+      preg_cesdW,
+      since_cesdW
+    ),
+     BF_cesd = c(
+      cumulative_cesd,
       childhood_cesd,
       precon_cesd,
       preg_cesd,
@@ -3234,18 +3187,20 @@ mp_BFs <-
 mp_BFs
 ```
 
-    ## # A tibble: 4 x 2
-    ##   key                   BF_cesd
-    ##   <chr>                   <dbl>
-    ## 1 parent_num_childhood    0.980
-    ## 2 parent_num_precon      12.4  
-    ## 3 preg_num_types          5.97 
-    ## 4 since_child_num_types  28.4
+    ## # A tibble: 5 × 3
+    ##   key                   BF_cesdW BF_cesd
+    ##   <chr>                    <dbl>   <dbl>
+    ## 1 parent_num_types        16.8     14.2 
+    ## 2 parent_num_childhood     0.980    1.14
+    ## 3 parent_num_precon       12.4     11.7 
+    ## 4 preg_num_types           5.97     3.40
+    ## 5 since_child_num_types   28.4     16.8
 
 #### Multiple regression
 
 ``` r
-lm.1 <- lm(
+# winsorized
+lmW.1 <- lm(
   cesd_total_W ~
     parent_num_childhood_W +
     parent_num_precon +
@@ -3253,23 +3208,39 @@ lm.1 <- lm(
     since_child_num_types_W,
   data = df
 )
+
+# raw
+lm.1 <- lm(
+  cesd_total ~
+    parent_num_childhood +
+    parent_num_precon +
+    preg_num_types +
+    since_child_num_types,
+  data = df
+)
 ```
 
+#### Diagnostics
+
 ``` r
-check_model(lm.1)
+# winsorized
+check_outliers(lmW.1)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 96 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-model_performance(lm.1)
+# raw
+check_outliers(lm.1)
+```
+
+    ## OK: No outliers detected.
+
+#### Performance
+
+``` r
+# winsorized
+model_performance(lmW.1)
 ```
 
     ## # Indices of model performance
@@ -3279,7 +3250,21 @@ model_performance(lm.1)
     ## 632.543 | 647.929 | 0.166 |     0.129 | 6.129 | 6.295
 
 ``` r
-model_parameters(lm.1)
+# raw
+model_performance(lm.1)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC |    R2 | R2 (adj.) |  RMSE | Sigma
+    ## -----------------------------------------------------
+    ## 636.305 | 651.691 | 0.155 |     0.118 | 6.250 | 6.420
+
+#### Parameters
+
+``` r
+# winsorized
+model_parameters(lmW.1)
 ```
 
     ## Parameter               | Coefficient |   SE |        95% CI | t(91) |      p
@@ -3291,7 +3276,7 @@ model_parameters(lm.1)
     ## since_child_num_types_W |        0.74 | 0.36 | [ 0.03, 1.45] |  2.06 | 0.042
 
 ``` r
-model_parameters(lm.1, standardize = "refit")
+model_parameters(lmW.1, standardize = "refit")
 ```
 
     ## Parameter               | Coefficient |   SE |        95% CI |    t(91) |      p
@@ -3302,9 +3287,42 @@ model_parameters(lm.1, standardize = "refit")
     ## preg_num_types_W        |        0.03 | 0.14 | [-0.24, 0.31] |     0.24 | 0.810 
     ## since_child_num_types_W |        0.29 | 0.14 | [ 0.01, 0.57] |     2.06 | 0.042
 
+``` r
+# raw
+model_parameters(lm.1)
+```
+
+    ## Parameter             | Coefficient |   SE |        95% CI | t(91) |      p
+    ## ---------------------------------------------------------------------------
+    ## (Intercept)           |        6.22 | 1.14 | [ 3.97, 8.48] |  5.48 | < .001
+    ## parent_num_childhood  |       -0.19 | 0.26 | [-0.70, 0.32] | -0.74 | 0.462 
+    ## parent_num_precon     |        0.74 | 0.30 | [ 0.15, 1.33] |  2.48 | 0.015 
+    ## preg_num_types        |        0.09 | 0.50 | [-0.90, 1.09] |  0.19 | 0.854 
+    ## since_child_num_types |        0.69 | 0.35 | [ 0.01, 1.38] |  2.00 | 0.048
+
+``` r
+model_parameters(lm.1, standardize = "refit")
+```
+
+    ## Parameter             | Coefficient |   SE |        95% CI |     t(91) |      p
+    ## -------------------------------------------------------------------------------
+    ## (Intercept)           |   -8.57e-17 | 0.10 | [-0.19, 0.19] | -8.94e-16 | > .999
+    ## parent_num_childhood  |       -0.09 | 0.13 | [-0.34, 0.16] |     -0.74 | 0.462 
+    ## parent_num_precon     |        0.29 | 0.12 | [ 0.06, 0.51] |      2.48 | 0.015 
+    ## preg_num_types        |        0.02 | 0.13 | [-0.24, 0.29] |      0.19 | 0.854 
+    ## since_child_num_types |        0.27 | 0.14 | [ 0.00, 0.55] |      2.00 | 0.048
+
 ### BAI
 
 #### BAI Spearman’s correlation
+
+``` r
+# winsorized
+SpearmanRho(df$parent_num_types, df$bai_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3119230 0.1188708 0.4822508
 
 ``` r
 SpearmanRho(df$parent_num_childhood_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
@@ -3334,57 +3352,112 @@ SpearmanRho(df$since_child_num_types_W, df$bai_total_W, use = "complete.obs", co
     ##        rho     lwr.ci     upr.ci 
     ## 0.28969997 0.09471516 0.46327835
 
+``` r
+# raw
+SpearmanRho(df$parent_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3125060 0.1195076 0.4827464
+
+``` r
+SpearmanRho(df$parent_num_childhood, df$bai_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3560320 0.1675023 0.5194406
+
+``` r
+SpearmanRho(df$parent_num_precon, df$bai_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.23100909 0.03200545 0.41239533
+
+``` r
+SpearmanRho(df$preg_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.22897814 0.02986311 0.41061406
+
+``` r
+SpearmanRho(df$since_child_num_types, df$bai_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.29005420 0.09509839 0.46358202
+
 #### Bayes Factors
 
 ``` r
-childhood_bai <- correlationBF(df$parent_num_childhood_W, df$bai_total_W)
-```
+# winsorized
+cumulative_baiW <- correlationBF(df$parent_num_types, df$bai_total_W)
+cumulative_baiW<- describe_posterior(cumulative_baiW, ci = 0.95)$BF
 
-    ## Ignored 1 rows containing missing observations.
+childhood_baiW <- correlationBF(df$parent_num_childhood_W, df$bai_total_W)
+childhood_baiW<- describe_posterior(childhood_baiW, ci = 0.95)$BF
 
-``` r
+precon_baiW <- correlationBF(df$parent_num_precon, df$bai_total_W)
+precon_baiW <- describe_posterior(precon_baiW, ci = 0.95)$BF
+
+preg_baiW <- correlationBF(df$preg_num_types_W, df$bai_total_W)
+preg_baiW <- describe_posterior(preg_baiW, ci = 0.95)$BF
+
+since_baiW <- correlationBF(df$since_child_num_types_W, df$bai_total_W)
+since_baiW <-describe_posterior(since_baiW, ci = 0.95)$BF
+
+# raw
+cumulative_bai <- correlationBF(df$parent_num_types, df$bai_total)
+cumulative_bai<- describe_posterior(cumulative_bai, ci = 0.95)$BF
+
+childhood_bai <- correlationBF(df$parent_num_childhood, df$bai_total)
 childhood_bai<- describe_posterior(childhood_bai, ci = 0.95)$BF
 
-precon_bai <- correlationBF(df$parent_num_precon, df$bai_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+precon_bai <- correlationBF(df$parent_num_precon, df$bai_total)
 precon_bai <- describe_posterior(precon_bai, ci = 0.95)$BF
 
-preg_bai <- correlationBF(df$preg_num_types_W, df$bai_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+preg_bai <- correlationBF(df$preg_num_types, df$bai_total)
 preg_bai <- describe_posterior(preg_bai, ci = 0.95)$BF
 
-since_bai <- correlationBF(df$since_child_num_types_W, df$bai_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+since_bai <- correlationBF(df$since_child_num_types, df$bai_total)
 since_bai <-describe_posterior(since_bai, ci = 0.95)$BF
+
 
 mp_BFs <-
   mp_BFs %>% 
   cbind(
-    BF_bai = c(
+    BF_baiW = c(
+      cumulative_baiW,
+      childhood_baiW,
+      precon_baiW,
+      preg_baiW,
+      since_baiW
+    ),
+     BF_bai = c(
+      cumulative_bai,
       childhood_bai,
       precon_bai,
       preg_bai,
       since_bai
     )
   )
+
+mp_BFs
 ```
+
+    ##                     key   BF_cesdW  BF_cesd    BF_baiW     BF_bai
+    ## 1      parent_num_types 16.8406673 14.21668  358.49495  255.62687
+    ## 2  parent_num_childhood  0.9802965  1.14423 1496.23591 3285.76986
+    ## 3     parent_num_precon 12.4493671 11.65746   43.67712   34.84401
+    ## 4        preg_num_types  5.9748095  3.40214   63.31362   59.77419
+    ## 5 since_child_num_types 28.4421373 16.80563   13.72059   11.70745
 
 #### Multiple regression
 
 ``` r
-lm.2 <- lm(
+# winsorized
+lmW.2 <- lm(
  bai_total_W ~
     parent_num_childhood_W +
     parent_num_precon +
@@ -3392,23 +3465,39 @@ lm.2 <- lm(
     since_child_num_types_W,
   data = df
 )
+
+# raw
+lm.2 <- lm(
+ bai_total ~
+    parent_num_childhood +
+    parent_num_precon +
+    preg_num_types +
+    since_child_num_types,
+  data = df
+)
 ```
 
+#### Diagnostics
+
 ``` r
-check_model(lm.2)
+# winsorized
+check_outliers(lmW.2)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 96 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-64-1.png)<!-- -->
+    ## OK: No outliers detected.
 
 ``` r
-model_performance(lm.2)
+# raw
+check_outliers(lm.2)
+```
+
+    ## OK: No outliers detected.
+
+#### Performance
+
+``` r
+# winsorized
+model_performance(lmW.2)
 ```
 
     ## # Indices of model performance
@@ -3418,7 +3507,21 @@ model_performance(lm.2)
     ## 568.601 | 583.987 | 0.232 |     0.198 | 4.393 | 4.512
 
 ``` r
-model_parameters(lm.2)
+# raw
+model_performance(lm.2)
+```
+
+    ## # Indices of model performance
+    ## 
+    ## AIC     |     BIC |    R2 | R2 (adj.) |  RMSE | Sigma
+    ## -----------------------------------------------------
+    ## 597.508 | 612.895 | 0.239 |     0.206 | 5.107 | 5.245
+
+#### Parameters
+
+``` r
+# winsorized
+model_parameters(lmW.2)
 ```
 
     ## Parameter               | Coefficient |   SE |        95% CI | t(91) |     p
@@ -3430,7 +3533,7 @@ model_parameters(lm.2)
     ## since_child_num_types_W |        0.03 | 0.26 | [-0.48, 0.54] |  0.13 | 0.899
 
 ``` r
-model_parameters(lm.2, standardize = "refit")
+model_parameters(lmW.2, standardize = "refit")
 ```
 
     ## Parameter               | Coefficient |   SE |        95% CI |     t(91) |      p
@@ -3441,33 +3544,57 @@ model_parameters(lm.2, standardize = "refit")
     ## preg_num_types_W        |        0.20 | 0.13 | [-0.07, 0.46] |      1.48 | 0.142 
     ## since_child_num_types_W |        0.02 | 0.13 | [-0.25, 0.28] |      0.13 | 0.899
 
+``` r
+# raw
+model_parameters(lm.2)
+```
+
+    ## Parameter             | Coefficient |   SE |        95% CI | t(91) |     p
+    ## --------------------------------------------------------------------------
+    ## (Intercept)           |        1.75 | 0.93 | [-0.10, 3.59] |  1.88 | 0.063
+    ## parent_num_childhood  |        0.52 | 0.21 | [ 0.10, 0.93] |  2.49 | 0.015
+    ## parent_num_precon     |        0.27 | 0.24 | [-0.21, 0.76] |  1.11 | 0.268
+    ## preg_num_types        |        0.62 | 0.41 | [-0.20, 1.43] |  1.50 | 0.137
+    ## since_child_num_types |        0.03 | 0.28 | [-0.53, 0.59] |  0.09 | 0.925
+
+``` r
+model_parameters(lm.2, standardize = "refit")
+```
+
+    ## Parameter             | Coefficient |   SE |        95% CI |     t(91) |      p
+    ## -------------------------------------------------------------------------------
+    ## (Intercept)           |   -1.25e-17 | 0.09 | [-0.18, 0.18] | -1.38e-16 | > .999
+    ## parent_num_childhood  |        0.30 | 0.12 | [ 0.06, 0.53] |      2.49 | 0.015 
+    ## parent_num_precon     |        0.12 | 0.11 | [-0.10, 0.34] |      1.11 | 0.268 
+    ## preg_num_types        |        0.19 | 0.13 | [-0.06, 0.44] |      1.50 | 0.137 
+    ## since_child_num_types |        0.01 | 0.13 | [-0.25, 0.27] |      0.09 | 0.925
+
 ### BAI and CESD visualize associations
 
 ``` r
 scales_apca_cesd_bai_x <- list(
   "Childhood adversity" = scale_x_continuous(
-    breaks = seq.int(0, 14, 2)
+    breaks = seq.int(0, 16, 2)
   ),
   "Preconception adversity" = scale_x_continuous(
     breaks = seq.int(0, 10, 2)
   ),
   "Prenatal adversity"= scale_x_continuous(
-    breaks = seq.int(0, 8, 1)
+    breaks = seq.int(0, 10, 1)
   ),
   "Adversity since birth" = scale_x_continuous(
-    breaks = seq.int(0, 12, 2)
+    breaks = seq.int(0, 14, 2)
   )
 )
 
 scales_apca_cesd_bai_y <- list(
   "Depression" = scale_y_continuous(
-    breaks = seq.int(0, 30, 5)
+    breaks = seq.int(0, 35, 5)
   ),
   "Anxiety" = scale_y_continuous(
-    breaks = seq.int(0, 25, 5)
+    breaks = seq.int(0, 35, 5)
   )
 )
-
 
 mp_BFs_lf <-
   mp_BFs %>% 
@@ -3488,12 +3615,12 @@ mp_BFs_lf <-
 ``` r
 df %>% 
   dplyr::select(
-    Depression = cesd_total_W,
-    Anxiety = bai_total_W,
-    parent_num_childhood = parent_num_childhood_W,
+    Depression = cesd_total,
+    Anxiety = bai_total,
+    parent_num_childhood,
     parent_num_precon,
-    preg_num_types = preg_num_types_W,
-    since_child_num_types = since_child_num_types_W
+    preg_num_types,
+    since_child_num_types,
   ) %>% 
   pivot_longer(
     cols = parent_num_childhood:since_child_num_types,
@@ -3543,8 +3670,6 @@ df %>%
     se = FALSE,
     aes(color = BF_logic)
   ) +
-  scale_y_continuous(breaks = seq.int(0, 40, 5)) +
-  scale_x_continuous(breaks = seq.int(0, 15, 1)) +
   scale_color_brewer(
     palette = "Oranges"
   ) +
@@ -3572,13 +3697,7 @@ df %>%
   )
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## Warning: Removed 8 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 8 rows containing missing values (geom_point).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
 
 ``` r
 ggsave(
@@ -3589,122 +3708,50 @@ ggsave(
 )
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## Warning: Removed 8 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 8 rows containing missing values (geom_point).
-
-## Comparative convergent validity
-
-### CTQ \~ CESD
-
-``` r
-cor.test(df$ctq_total_W, df$cesd_total_W)
-```
-
-    ## 
-    ##  Pearson's product-moment correlation
-    ## 
-    ## data:  df$ctq_total_W and df$cesd_total_W
-    ## t = 1.1505, df = 94, p-value = 0.2529
-    ## alternative hypothesis: true correlation is not equal to 0
-    ## 95 percent confidence interval:
-    ##  -0.08464838  0.31097656
-    ## sample estimates:
-    ##       cor 
-    ## 0.1178374
-
-``` r
-ctq_cesd<- correlationBF(df$ctq_total_W, df$cesd_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
-describe_posterior(ctq_cesd, ci = 0.95)$BF
-```
-
-    ## [1] 0.4351361
-
-### Life events measured in pregnancy \~ CESD
-
-``` r
-SpearmanRho(df$prenatal_life_events_W, df$cesd_total_W, use = "complete.obs", conf.level = .95)
-```
-
-    ##         rho      lwr.ci      upr.ci 
-    ##  0.09415612 -0.12680016  0.30621017
-
-``` r
-ple_cesd<- correlationBF(df$prenatal_life_events_W, df$cesd_total_W)
-```
-
-    ## Ignored 16 rows containing missing observations.
-
-``` r
-describe_posterior(ple_cesd, ci = 0.95)$BF
-```
-
-    ## [1] 0.3297063
-
-### CTQ \~ BAI
-
-``` r
-cor.test(df$ctq_total_W, df$bai_total_W)
-```
-
-    ## 
-    ##  Pearson's product-moment correlation
-    ## 
-    ## data:  df$ctq_total_W and df$bai_total_W
-    ## t = 2.9938, df = 94, p-value = 0.00352
-    ## alternative hypothesis: true correlation is not equal to 0
-    ## 95 percent confidence interval:
-    ##  0.1005025 0.4678549
-    ## sample estimates:
-    ##       cor 
-    ## 0.2950435
-
-``` r
-ctq_bai<- correlationBF(df$ctq_total_W, df$bai_total_W)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
-describe_posterior(ctq_bai, ci = 0.95)$BF
-```
-
-    ## [1] 13.16627
-
-### Life events measured in pregnancy \~ BAI
-
-``` r
-SpearmanRho(df$prenatal_life_events_W, df$bai_total_W, use = "complete.obs", conf.level = .95)
-```
-
-    ##         rho      lwr.ci      upr.ci 
-    ## 0.223958638 0.005897636 0.421687026
-
-``` r
-ple_bai <- correlationBF(df$prenatal_life_events_W, df$bai_total_W)
-```
-
-    ## Ignored 16 rows containing missing observations.
-
-``` r
-describe_posterior(ple_bai, ci = 0.95)$BF
-```
-
-    ## [1] 0.7699151
-
 ### CBCL
 
 #### Spearman’s correlations
 
 ``` r
 # maternal exposure
+
+## winsorized
+SpearmanRho(df$parent_num_types, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.3647145 0.1771843 0.5266889
+
+``` r
+SpearmanRho(df$parent_num_childhood_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.26715870 0.07044595 0.44387026
+
+``` r
+SpearmanRho(df$parent_num_precon, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##          rho       lwr.ci       upr.ci 
+    ##  0.191961575 -0.008865566  0.377903671
+
+``` r
+SpearmanRho(df$preg_num_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.23805991 0.03945716 0.41856855
+
+``` r
+SpearmanRho(df$since_child_num_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
+```
+
+    ##        rho     lwr.ci     upr.ci 
+    ## 0.21272090 0.01277999 0.39630539
+
+``` r
+## raw
 SpearmanRho(df$parent_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 ```
 
@@ -3712,11 +3759,11 @@ SpearmanRho(df$parent_num_types, df$total_problems_total, use = "complete.obs", 
     ## 0.3647145 0.1771843 0.5266889
 
 ``` r
-SpearmanRho(df$parent_num_childhood_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$parent_num_childhood, df$total_problems_total, use = "complete.obs", conf.level = .95)
 ```
 
     ##        rho     lwr.ci     upr.ci 
-    ## 0.26715870 0.07044595 0.44387026
+    ## 0.26717148 0.07045965 0.44388131
 
 ``` r
 SpearmanRho(df$parent_num_precon, df$total_problems_total, use = "complete.obs", conf.level = .95)
@@ -3726,88 +3773,102 @@ SpearmanRho(df$parent_num_precon, df$total_problems_total, use = "complete.obs",
     ##  0.191961575 -0.008865566  0.377903671
 
 ``` r
-SpearmanRho(df$preg_num_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$preg_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 ```
 
     ##        rho     lwr.ci     upr.ci 
-    ## 0.23805991 0.03945716 0.41856855
+    ## 0.23798333 0.03937611 0.41850159
 
 ``` r
-SpearmanRho(df$since_child_num_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$since_child_num_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
 ```
 
     ##        rho     lwr.ci     upr.ci 
-    ## 0.21272090 0.01277999 0.39630539
+    ## 0.21308114 0.01315727 0.39662342
 
 ``` r
 # child witnessing and exposure
-SpearmanRho(df$child_num_wit_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+
+## winsorized
+SpearmanRho(df$child_num_wit_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
 ```
 
     ##          rho       lwr.ci       upr.ci 
     ##  0.192774148 -0.008021828  0.378626735
 
 ``` r
-SpearmanRho(df$child_num_dir_types_W, df$total_problems_total, use = "complete.obs", conf.level = .95)
+SpearmanRho(df$child_num_dir_types_W, df$total_problems_total_W, use = "complete.obs", conf.level = .95)
 ```
 
     ##       rho    lwr.ci    upr.ci 
     ## 0.2987585 0.1045338 0.4710311
 
+``` r
+## raw
+SpearmanRho(df$child_num_wit_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##          rho       lwr.ci       upr.ci 
+    ##  0.193146696 -0.007634896  0.378958168
+
+``` r
+SpearmanRho(df$child_num_dir_types, df$total_problems_total, use = "complete.obs", conf.level = .95)
+```
+
+    ##       rho    lwr.ci    upr.ci 
+    ## 0.2992170 0.1050317 0.4714228
+
 #### Bayes Factors
 
 ``` r
-childhood_cbcl <- correlationBF(df$parent_num_childhood_W, df$total_problems_total)
-```
+# winsorized 
+cumulative_cbclW <- correlationBF(df$parent_num_types, df$total_problems_total_W)
+cumulative_cbclW <- describe_posterior(cumulative_cbclW, ci = 0.95)$BF
 
-    ## Ignored 1 rows containing missing observations.
+childhood_cbclW <- correlationBF(df$parent_num_childhood_W, df$total_problems_total_W)
+childhood_cbclW <- describe_posterior(childhood_cbclW, ci = 0.95)$BF
 
-``` r
+precon_cbclW  <- correlationBF(df$parent_num_precon, df$total_problems_total_W)
+precon_cbclW  <- describe_posterior(precon_cbclW, ci = 0.95)$BF
+
+preg_cbclW  <- correlationBF(df$preg_num_types_W, df$total_problems_total_W)
+preg_cbclW <- describe_posterior(preg_cbclW, ci = 0.95)$BF
+
+since_cbclW  <- correlationBF(df$since_child_num_types_W, df$total_problems_total_W)
+since_cbclW  <-describe_posterior(since_cbclW, ci = 0.95)$BF
+
+wit_cbclW  <- correlationBF(df$child_num_wit_types_W, df$total_problems_total_W)
+wit_cbclW  <-describe_posterior(wit_cbclW, ci = 0.95)$BF
+
+dir_cbclW  <- correlationBF(df$child_num_dir_types_W, df$total_problems_total_W)
+dir_cbclW  <-describe_posterior(dir_cbclW, ci = 0.95)$BF
+
+# raw 
+cumulative_cbcl <- correlationBF(df$parent_num_types, df$total_problems_total)
+cumulative_cbcl <- describe_posterior(cumulative_cbcl, ci = 0.95)$BF
+
+childhood_cbcl <- correlationBF(df$parent_num_childhood, df$total_problems_total)
 childhood_cbcl <- describe_posterior(childhood_cbcl, ci = 0.95)$BF
 
 precon_cbcl  <- correlationBF(df$parent_num_precon, df$total_problems_total)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
 precon_cbcl  <- describe_posterior(precon_cbcl, ci = 0.95)$BF
 
-preg_cbcl  <- correlationBF(df$preg_num_types_W, df$total_problems_total)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+preg_cbcl  <- correlationBF(df$preg_num_types, df$total_problems_total)
 preg_cbcl <- describe_posterior(preg_cbcl, ci = 0.95)$BF
 
-since_cbcl  <- correlationBF(df$since_child_num_types_W, df$total_problems_total)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+since_cbcl  <- correlationBF(df$since_child_num_types, df$total_problems_total)
 since_cbcl  <-describe_posterior(since_cbcl, ci = 0.95)$BF
 
-wit_cbcl  <- correlationBF(df$child_num_wit_types_W, df$total_problems_total)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+wit_cbcl  <- correlationBF(df$child_num_wit_types, df$total_problems_total)
 wit_cbcl  <-describe_posterior(wit_cbcl, ci = 0.95)$BF
 
-dir_cbcl  <- correlationBF(df$child_num_dir_types_W, df$total_problems_total)
-```
-
-    ## Ignored 1 rows containing missing observations.
-
-``` r
+dir_cbcl  <- correlationBF(df$child_num_dir_types, df$total_problems_total)
 dir_cbcl  <-describe_posterior(dir_cbcl, ci = 0.95)$BF
 
 cp_BFs <-
   tibble(
     key = c(
+      "parent_num_types",
       "parent_num_childhood",
       "parent_num_precon",
       "preg_num_types",
@@ -3815,7 +3876,17 @@ cp_BFs <-
       "child_num_wit_types",
       "child_num_dir_types"
     ),
+    BF_cbclW= c(
+      cumulative_cbclW,
+      childhood_cbclW,
+      precon_cbclW,
+      preg_cbclW,
+      since_cbclW,
+      wit_cbclW,
+      dir_cbclW
+    ),
     BF_cbcl= c(
+      cumulative_cbcl,
       childhood_cbcl,
       precon_cbcl,
       preg_cbcl,
@@ -3828,98 +3899,179 @@ cp_BFs <-
 cp_BFs
 ```
 
-    ## # A tibble: 6 x 2
-    ##   key                    BF_cbcl
-    ##   <chr>                    <dbl>
-    ## 1 parent_num_childhood     1.33 
-    ## 2 parent_num_precon        0.655
-    ## 3 preg_num_types         151.   
-    ## 4 since_child_num_types    5.67 
-    ## 5 child_num_wit_types      8.24 
-    ## 6 child_num_dir_types   1511.
+    ## # A tibble: 7 × 3
+    ##   key                   BF_cbclW  BF_cbcl
+    ##   <chr>                    <dbl>    <dbl>
+    ## 1 parent_num_types        42.8     42.0  
+    ## 2 parent_num_childhood     1.37     1.47 
+    ## 3 parent_num_precon        0.662    0.655
+    ## 4 preg_num_types         146.     136.   
+    ## 5 since_child_num_types    5.38     8.47 
+    ## 6 child_num_wit_types      7.82    16.7  
+    ## 7 child_num_dir_types   1475.    3454.
 
-### CBCL visualize
+#### CBCL visualize associations
 
 ``` r
-scales_apca_child_probs <- list(
-  `Maternal cumulative adversity` = scale_x_continuous(
-    breaks = seq.int(0, 25, 5)
+scales_apca_total_problems_x <- list(
+  "Maternal childhood adversity" = scale_x_continuous(
+    breaks = seq.int(0, 14, 2)
   ),
-  `Child direct adversity` = scale_x_continuous(
+  "Preconception adversity" = scale_x_continuous(
+    breaks = seq.int(0, 10, 2)
+  ),
+  "Prenatal adversity"= scale_x_continuous(
+    breaks = seq.int(0, 8, 1)
+  ),
+  "Maternal adversity since birth" = scale_x_continuous(
+    breaks = seq.int(0, 12, 2)
+  ),
+  "Child witnessed adversity" = scale_x_continuous(
+    breaks = seq.int(0, 8, 1)
+  ),
+  "Child direct adversity" = scale_x_continuous(
     breaks = seq.int(0, 4, 1)
   )
 )
 
+
+cp_BFs_lf <-
+  cp_BFs %>% 
+  dplyr::select(-BF_cbclW) %>% 
+  pivot_longer(
+    cols = -key
+  ) %>% 
+  rename(
+    adversity_type = key,
+    BF = value
+  )
+```
+
+``` r
 df %>% 
   dplyr::select(
     total_problems_total,
-    `Maternal cumulative adversity` = parent_num_types,
-    `Child direct adversity` = child_num_dir_types
+    parent_num_childhood,
+    parent_num_precon,
+    preg_num_types,
+    since_child_num_types ,
+    child_num_wit_types,
+    child_num_dir_types
   ) %>% 
   pivot_longer(
-    cols = `Maternal cumulative adversity`:`Child direct adversity`
+    cols = parent_num_childhood:child_num_dir_types,
+    names_to = "adversity_type",
+    values_to = "adversity_score"
   ) %>% 
+  left_join(cp_BFs_lf, by = c("adversity_type")) %>% 
   mutate(
-    name = factor(
-      name,
+    adversity_type = factor(
+      adversity_type,
       levels = c(
-        "Maternal cumulative adversity",
+        "parent_num_childhood",
+        "parent_num_precon",
+        "preg_num_types",
+        "since_child_num_types",
+        "child_num_wit_types",
+        "child_num_dir_types"
+      ),
+      labels = c(
+        "Maternal childhood adversity",
+        "Preconception adversity",
+        "Prenatal adversity",
+        "Maternal adversity since birth",
+        "Child witnessed adversity",
         "Child direct adversity"
       )
+    ),
+    BF_logic = case_when(
+      BF > .33 & BF < 1 ~ "Anecdotal",
+      BF >= 1 & BF < 3 ~ "Anecdotal",
+      BF >= 3 & BF < 10 ~ "Moderate",
+      BF >= 10 & BF < 30 ~ "Strong",
+      BF >= 30 & BF < 100 ~ "Very strong",
+      BF >= 100 ~ "Extreme"
+    ),
+    BF_logic = factor(
+      BF_logic,
+      levels = c("Anecdotal", "Moderate", "Strong", "Very strong", "Extreme")
     )
   ) %>% 
-  ggplot(aes(value, total_problems_total)) +
-  geom_jitter2(size = 5, alpha = 1/3) +
-  geom_smooth(method = "glm", size = 3, color = "black", se = FALSE) +
-  scale_y_continuous(breaks = seq.int(0, 70, 10)) +
-  scale_x_continuous(breaks = seq.int(0, 25, 1)) +
-  theme_mod +
-  labs(
-    x = "APCA score",
-    y = "Child total behavioral\nand emotional problems"
+  mutate(
+    row = case_when(
+      adversity_type == "Maternal childhood adversity" ~ "one",
+      adversity_type == "Preconception adversity" ~ "one",
+      adversity_type == "Prenatal adversity" ~ "one",
+      adversity_type == "Maternal adversity since birth" ~ "two",
+      adversity_type == "Child witnessed adversity" ~ "two",
+      adversity_type == "Child direct adversity" ~ "two"
+    )
+  ) %>% 
+  ggplot(aes(adversity_score, total_problems_total)) +
+  geom_jitter2(size = 4, alpha = 1/2, color = "black") +
+  geom_smooth(
+    method = "lm", 
+    size = 4, 
+    se = FALSE,
+    aes(color = BF_logic)
   ) +
-  facet_grid_sc(.~name, scales = list(x = scales_apca_child_probs))
+  #scale_y_continuous(breaks = seq.int(0, 40, 5)) +
+  #scale_x_continuous(breaks = seq.int(0, 15, 1)) +
+  scale_color_brewer(
+    palette = "Oranges"
+  ) +
+  theme_grey() +
+  theme(
+    panel.grid = element_blank(),
+    plot.title = element_text(size = 18, hjust = .5, face = "bold"),
+    axis.title = element_text(size = 20),
+    axis.text = element_text(size = 18),
+    legend.title = element_text(size = 20), 
+    legend.text = element_text(size = 18),
+    strip.text.x = element_text(size = 16, face = "bold", color = "black"),
+    strip.text.y = element_text(size = 20, face = "bold", color = "black"),
+    strip.background = element_blank(),
+    legend.position = "right"
+  ) +
+  labs(
+    color = "Bayes Factor\n(Strength of evidence)",
+    x = NULL,
+    y = "Child total behavioral and emotional problems"
+  ) +
+  facet_grid_sc(
+    . ~ adversity_type,
+    scales = list(x = scales_apca_total_problems_x)
+  )
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## Warning: Removed 2 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 2 rows containing missing values (geom_point).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
+![](apca_manuscript_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/cbcl_apca_scores.png",
-  dpi = 500,
-  height = 5,
-  width = 11
+  "~/Box/lucy_king_files/MoD/APCA/figures/total_problems_adversity.png",
+  dpi = 1000,
+  height = 6,
+  width = 30
 )
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
+#### CBCL total problems regressions
 
-    ## Warning: Removed 2 rows containing non-finite values (stat_smooth).
-    
-    ## Warning: Removed 2 rows containing missing values (geom_point).
-
-### CBCL total problems regressions
-
-### Fit model
+#### Fit model
 
 ``` r
-lm.4 <- lm(
-  total_problems_total ~ 
-    scale(cesd_total, scale = FALSE) +
-    scale(bai_total, scale = FALSE),
+# winsorized 
+lmW.4 <- lm(
+  total_problems_total_W ~ 
+    scale(cesd_total_W, scale = FALSE) +
+    scale(bai_total_W, scale = FALSE),
   data = df
 )
-
-lm.5 <- lm(
-  total_problems_total ~ 
-    scale(cesd_total, scale = FALSE) +
-    scale(bai_total, scale = FALSE) +
+      
+lmW.5 <- lm(
+  total_problems_total_W ~ 
+    scale(cesd_total_W, scale = FALSE) +
+    scale(bai_total_W, scale = FALSE) +
     scale(parent_num_childhood_W, scale = FALSE) +
     scale(parent_num_precon, scale = FALSE) +
     scale(preg_num_types_W) +
@@ -3927,9 +4079,8 @@ lm.5 <- lm(
   data = df
 )
 
-
-lm.6 <- lm(
-  total_problems_total ~ 
+lmW.6 <- lm(
+  total_problems_total_W ~ 
     scale(cesd_total, scale = FALSE) +
     scale(bai_total, scale = FALSE) +
     scale(child_num_dir_types_W) +
@@ -3938,38 +4089,87 @@ lm.6 <- lm(
 )
 ```
 
-### Diagnostics
-
 ``` r
-check_model(lm.5)
+# raw 
+lm.4 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE),
+  data = df
+)
+      
+lm.5 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE) +
+    scale(parent_num_childhood, scale = FALSE) +
+    scale(parent_num_precon, scale = FALSE) +
+    scale(preg_num_types) +
+    scale(since_child_num_types),
+  data = df
+)
+
+lm.6 <- lm(
+  total_problems_total ~ 
+    scale(cesd_total, scale = FALSE) +
+    scale(bai_total, scale = FALSE) +
+    scale(child_num_dir_types) +
+    scale(child_num_wit_types),
+  data = df
+)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 95 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+#### Diagnostics
 
 ``` r
-check_model(lm.6)
+# winsorized
+check_outliers(lmW.5)
 ```
 
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `geom_smooth()` using formula 'y ~ x'
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 95 rows containing missing values (geom_text_repel).
-
-![](apca_manuscript_files/figure-gfm/unnamed-chunk-77-2.png)<!-- -->
-
-### Performance
+    ## OK: No outliers detected.
 
 ``` r
+check_outliers(lmW.6)
+```
+
+    ## OK: No outliers detected.
+
+``` r
+# raw
+check_outliers(lm.5)
+```
+
+    ## OK: No outliers detected.
+
+``` r
+check_outliers(lm.6)
+```
+
+    ## OK: No outliers detected.
+
+#### Performance
+
+``` r
+# winsorized
+lmW.4_performance <- model_performance(lmW.4)
+lmW.5_performance <- model_performance(lmW.5)
+lmW.6_performance <- model_performance(lmW.6)
+
+# R-squared change for maternal adversity variables
+lmW.5_performance$R2_adjusted - lmW.4_performance$R2
+```
+
+    ## [1] 0.04861164
+
+``` r
+# R-squared change for child adversity variables
+lmW.6_performance$R2_adjusted - lmW.4_performance$R2
+```
+
+    ## [1] 0.1042276
+
+``` r
+# raw
 lm.4_performance <- model_performance(lm.4)
 lm.5_performance <- model_performance(lm.5)
 lm.6_performance <- model_performance(lm.6)
@@ -3978,65 +4178,119 @@ lm.6_performance <- model_performance(lm.6)
 lm.5_performance$R2_adjusted - lm.4_performance$R2
 ```
 
-    ## [1] 0.04759148
+    ## [1] 0.04670091
 
 ``` r
 # R-squared change for child adversity variables
 lm.6_performance$R2_adjusted - lm.4_performance$R2
 ```
 
-    ## [1] 0.1059644
+    ## [1] 0.1227206
 
-### Parameters
+#### Parameters
 
 ``` r
-model_parameters(lm.5) 
+# winsorized
+model_parameters(lmW.5) 
 ```
 
     ## Parameter               | Coefficient |   SE |         95% CI | t(88) |      p
     ## ------------------------------------------------------------------------------
-    ## (Intercept)             |       25.11 | 1.50 | [22.14, 28.09] | 16.77 | < .001
-    ## cesd_total              |        0.63 | 0.33 | [-0.02,  1.28] |  1.92 | 0.058 
-    ## bai_total               |       -0.24 | 0.40 | [-1.03,  0.55] | -0.61 | 0.543 
-    ## parent_num_childhood_W  |        0.46 | 0.64 | [-0.81,  1.74] |  0.72 | 0.474 
-    ## parent_num_precon       |       -0.07 | 0.71 | [-1.48,  1.34] | -0.10 | 0.918 
-    ## preg_num_types_W        |        5.55 | 2.19 | [ 1.20,  9.89] |  2.54 | 0.013 
-    ## since_child_num_types_W |       -1.15 | 2.28 | [-5.69,  3.39] | -0.50 | 0.617
+    ## (Intercept)             |       25.09 | 1.49 | [22.13, 28.05] | 16.86 | < .001
+    ## cesd_total_W            |        0.65 | 0.33 | [ 0.01,  1.30] |  2.01 | 0.048 
+    ## bai_total_W             |       -0.32 | 0.46 | [-1.23,  0.58] | -0.71 | 0.483 
+    ## parent_num_childhood_W  |        0.50 | 0.64 | [-0.77,  1.76] |  0.77 | 0.440 
+    ## parent_num_precon       |       -0.08 | 0.70 | [-1.48,  1.32] | -0.11 | 0.912 
+    ## preg_num_types_W        |        5.57 | 2.17 | [ 1.26,  9.89] |  2.56 | 0.012 
+    ## since_child_num_types_W |       -1.28 | 2.28 | [-5.81,  3.24] | -0.56 | 0.574
+
+``` r
+model_parameters(lmW.5, standardize = "refit")
+```
+
+    ## Parameter               | Coefficient |   SE |        95% CI |     t(88) |      p
+    ## ---------------------------------------------------------------------------------
+    ## (Intercept)             |   -8.35e-18 | 0.10 | [-0.19, 0.19] | -8.77e-17 | > .999
+    ## cesd_total_W            |        0.28 | 0.14 | [ 0.00, 0.56] |      2.01 | 0.048 
+    ## bai_total_W             |       -0.10 | 0.15 | [-0.40, 0.19] |     -0.71 | 0.483 
+    ## parent_num_childhood_W  |        0.10 | 0.13 | [-0.16, 0.37] |      0.77 | 0.440 
+    ## parent_num_precon       |       -0.01 | 0.12 | [-0.25, 0.22] |     -0.11 | 0.912 
+    ## preg_num_types_W        |        0.36 | 0.14 | [ 0.08, 0.64] |      2.56 | 0.012 
+    ## since_child_num_types_W |       -0.08 | 0.15 | [-0.37, 0.21] |     -0.56 | 0.574
+
+``` r
+model_parameters(lmW.6) 
+```
+
+    ## Parameter             | Coefficient |   SE |         95% CI | t(90) |      p
+    ## ----------------------------------------------------------------------------
+    ## (Intercept)           |       25.09 | 1.44 | [22.24, 27.95] | 17.44 | < .001
+    ## cesd_total            |        0.45 | 0.29 | [-0.13,  1.03] |  1.54 | 0.128 
+    ## bai_total             |        0.03 | 0.34 | [-0.65,  0.71] |  0.10 | 0.924 
+    ## child_num_dir_types_W |        5.06 | 1.66 | [ 1.76,  8.37] |  3.05 | 0.003 
+    ## child_num_wit_types_W |        1.60 | 1.63 | [-1.64,  4.84] |  0.98 | 0.329
+
+``` r
+model_parameters(lmW.6, standardize = "refit")
+```
+
+    ## Parameter             | Coefficient |   SE |        95% CI |     t(90) |      p
+    ## -------------------------------------------------------------------------------
+    ## (Intercept)           |   -3.84e-17 | 0.09 | [-0.18, 0.18] | -4.17e-16 | > .999
+    ## cesd_total            |        0.20 | 0.13 | [-0.06, 0.45] |      1.54 | 0.128 
+    ## bai_total             |        0.01 | 0.13 | [-0.24, 0.27] |      0.10 | 0.924 
+    ## child_num_dir_types_W |        0.33 | 0.11 | [ 0.11, 0.54] |      3.05 | 0.003 
+    ## child_num_wit_types_W |        0.10 | 0.11 | [-0.11, 0.31] |      0.98 | 0.329
+
+``` r
+# raw
+model_parameters(lm.5) 
+```
+
+    ## Parameter             | Coefficient |   SE |         95% CI |     t(88) |      p
+    ## --------------------------------------------------------------------------------
+    ## (Intercept)           |       25.10 | 1.50 | [22.13, 28.08] |     16.76 | < .001
+    ## cesd_total            |        0.62 | 0.33 | [-0.03,  1.27] |      1.89 | 0.062 
+    ## bai_total             |       -0.24 | 0.40 | [-1.04,  0.55] |     -0.61 | 0.545 
+    ## parent_num_childhood  |        0.39 | 0.64 | [-0.88,  1.66] |      0.61 | 0.544 
+    ## parent_num_precon     |   -2.73e-03 | 0.71 | [-1.41,  1.41] | -3.84e-03 | 0.997 
+    ## preg_num_types        |        5.03 | 2.13 | [ 0.80,  9.25] |      2.36 | 0.020 
+    ## since_child_num_types |       -0.32 | 2.22 | [-4.73,  4.09] |     -0.14 | 0.887
 
 ``` r
 model_parameters(lm.5, standardize = "refit")
 ```
 
-    ## Parameter               | Coefficient |   SE |        95% CI |     t(88) |      p
-    ## ---------------------------------------------------------------------------------
-    ## (Intercept)             |   -9.92e-17 | 0.10 | [-0.19, 0.19] | -1.04e-15 | > .999
-    ## cesd_total              |        0.27 | 0.14 | [-0.01, 0.56] |      1.92 | 0.058 
-    ## bai_total               |       -0.09 | 0.15 | [-0.39, 0.20] |     -0.61 | 0.543 
-    ## parent_num_childhood_W  |        0.10 | 0.13 | [-0.17, 0.36] |      0.72 | 0.474 
-    ## parent_num_precon       |       -0.01 | 0.12 | [-0.25, 0.22] |     -0.10 | 0.918 
-    ## preg_num_types_W        |        0.36 | 0.14 | [ 0.08, 0.63] |      2.54 | 0.013 
-    ## since_child_num_types_W |       -0.07 | 0.15 | [-0.36, 0.22] |     -0.50 | 0.617
+    ## Parameter             | Coefficient |   SE |        95% CI |     t(88) |      p
+    ## -------------------------------------------------------------------------------
+    ## (Intercept)           |   -4.36e-17 | 0.10 | [-0.19, 0.19] | -4.58e-16 | > .999
+    ## cesd_total            |        0.27 | 0.14 | [-0.01, 0.56] |      1.89 | 0.062 
+    ## bai_total             |       -0.09 | 0.15 | [-0.39, 0.21] |     -0.61 | 0.545 
+    ## parent_num_childhood  |        0.08 | 0.14 | [-0.19, 0.35] |      0.61 | 0.544 
+    ## parent_num_precon     |   -4.57e-04 | 0.12 | [-0.24, 0.24] | -3.84e-03 | 0.997 
+    ## preg_num_types        |        0.32 | 0.14 | [ 0.05, 0.59] |      2.36 | 0.020 
+    ## since_child_num_types |       -0.02 | 0.14 | [-0.30, 0.26] |     -0.14 | 0.887
 
 ``` r
 model_parameters(lm.6) 
 ```
 
-    ## Parameter             | Coefficient |   SE |         95% CI | t(90) |      p
-    ## ----------------------------------------------------------------------------
-    ## (Intercept)           |       25.12 | 1.45 | [22.25, 27.99] | 17.38 | < .001
-    ## cesd_total            |        0.45 | 0.29 | [-0.13,  1.03] |  1.53 | 0.128 
-    ## bai_total             |        0.04 | 0.34 | [-0.64,  0.72] |  0.12 | 0.906 
-    ## child_num_dir_types_W |        5.07 | 1.67 | [ 1.76,  8.39] |  3.04 | 0.003 
-    ## child_num_wit_types_W |        1.64 | 1.64 | [-1.61,  4.90] |  1.00 | 0.318
+    ## Parameter           | Coefficient |   SE |         95% CI | t(90) |      p
+    ## --------------------------------------------------------------------------
+    ## (Intercept)         |       25.12 | 1.43 | [22.28, 27.96] | 17.57 | < .001
+    ## cesd_total          |        0.45 | 0.29 | [-0.12,  1.03] |  1.56 | 0.122 
+    ## bai_total           |        0.04 | 0.34 | [-0.63,  0.72] |  0.13 | 0.901 
+    ## child_num_dir_types |        5.26 | 1.70 | [ 1.88,  8.63] |  3.09 | 0.003 
+    ## child_num_wit_types |        1.74 | 1.67 | [-1.58,  5.05] |  1.04 | 0.300
 
 ``` r
 model_parameters(lm.6, standardize = "refit")
 ```
 
-    ## Parameter             | Coefficient |   SE |        95% CI |     t(90) |      p
-    ## -------------------------------------------------------------------------------
-    ## (Intercept)           |   -1.30e-16 | 0.09 | [-0.18, 0.18] | -1.41e-15 | > .999
-    ## cesd_total            |        0.20 | 0.13 | [-0.06, 0.45] |      1.53 | 0.128 
-    ## bai_total             |        0.02 | 0.13 | [-0.24, 0.27] |      0.12 | 0.906 
-    ## child_num_dir_types_W |        0.33 | 0.11 | [ 0.11, 0.54] |      3.04 | 0.003 
-    ## child_num_wit_types_W |        0.11 | 0.11 | [-0.10, 0.31] |      1.00 | 0.318
+    ## Parameter           | Coefficient |   SE |        95% CI |     t(90) |      p
+    ## -----------------------------------------------------------------------------
+    ## (Intercept)         |   -1.07e-16 | 0.09 | [-0.18, 0.18] | -1.18e-15 | > .999
+    ## cesd_total          |        0.20 | 0.13 | [-0.05, 0.45] |      1.56 | 0.122 
+    ## bai_total           |        0.02 | 0.13 | [-0.24, 0.27] |      0.13 | 0.901 
+    ## child_num_dir_types |        0.34 | 0.11 | [ 0.12, 0.55] |      3.09 | 0.003 
+    ## child_num_wit_types |        0.11 | 0.11 | [-0.10, 0.32] |      1.04 | 0.300
