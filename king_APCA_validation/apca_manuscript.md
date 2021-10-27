@@ -1129,7 +1129,7 @@ df %>%
     `Maternal cumulative adversity` = parent_num_types,
     `Child witnessed adversity` = child_num_wit_types,
     `Child direct adversity` = child_num_dir_types,
-    `CTQ-SF total score` = ctq_total, 
+    `CTQ total score` = ctq_total, 
     `DQAQ-SPF maternal adversity` = prenatal_life_events,
     `BCEs total score` = bces_total,
     `CES-D total score` = cesd_total, 
@@ -1150,7 +1150,7 @@ df %>%
         "Maternal cumulative adversity",
         "Child witnessed adversity",
         "Child direct adversity",
-        "CTQ-SF total score",
+        "CTQ total score",
         "DQAQ-SPF maternal adversity",
         "BCEs total score",
         "CES-D total score",
@@ -2506,7 +2506,7 @@ ctq_plot <-
   scale_x_continuous(breaks = seq.int(0, 100, 10)) +
   theme_mod +
   labs(
-    x = "CTQ-SF\nMaternal childhood maltreatment",
+    x = "CTQ\nMaternal childhood maltreatment",
     y = "APCA\nMaternal childhood adversity"
   )
 
