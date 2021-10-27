@@ -1671,7 +1671,7 @@ apca_corr_plot %>%
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/correlations.png",
+  "~/Box/lucy_king_files/MoD/APCA/figures/correlations.jpeg",
   dpi = 1000,
   height = 5,
   width = 7.5
@@ -2517,8 +2517,8 @@ ctq_plot
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_num_types.png",
-  dpi = 500,
+  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_num_types.jpeg",
+  dpi = 600,
   height = 5,
   width = 6
 )
@@ -3017,8 +3017,8 @@ bces_plot
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/bces_num_types.png",
-  dpi = 500,
+  "~/Box/lucy_king_files/MoD/APCA/figures/bces_num_types.jpeg",
+  dpi = 600,
   height = 5,
   width = 4
 )
@@ -3034,7 +3034,7 @@ ctq_bces_plots <- arrangeGrob(
 )
 
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_bces_apca_childhood.png",
+  "~/Box/lucy_king_files/MoD/APCA/figures/ctq_bces_apca_childhood.jpeg",
   ctq_bces_plots,
   dpi = 1000,
   height = 5,
@@ -3695,7 +3695,7 @@ df %>%
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/cesd_bai_adversity.png",
+  "~/Box/lucy_king_files/MoD/APCA/figures/cesd_bai_adversity.jpeg",
   dpi = 1000,
   height = 6,
   width = 14.75
@@ -4042,10 +4042,10 @@ df %>%
 
 ``` r
 ggsave(
-  "~/Box/lucy_king_files/MoD/APCA/figures/total_problems_adversity.png",
+  "~/Box/lucy_king_files/MoD/APCA/figures/total_problems_adversity.jpeg",
   dpi = 1000,
-  height = 6,
-  width = 30
+  height = 4,
+  width = 24
 )
 ```
 
