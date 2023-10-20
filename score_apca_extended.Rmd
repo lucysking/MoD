@@ -1,7 +1,8 @@
 ---
 title: "Score the Assessment of Parent and Child Adversity"
 author: "Lucy King"
-date: "4/23/2021"
+revised by: "Sanjana Ravi"
+date: "10/6/2023"
 output:
   pdf_document: default
   html_document: default
@@ -14,8 +15,9 @@ library(purrr)
 library(rlang)
 library(reactable)
 library(lubridate)
+library(dplyr)
 
-apca_raw_file <- "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/APCA/apca_raw_data_20210923_cleaned.csv"
+apca_raw_file <- read.csv("FILE PATH TO RAW FILE")
 
 options(
   reactable.theme = reactableTheme(
@@ -52,7 +54,7 @@ a <-
     lang = language,
     pardivorce_age_onset = pardivorce_age_once,
     divorce_age_onset = divorce_age_once,
-    authority_child_age_wit = authoriy_child_age_wit
+    authority_child_age_wit = authority_child_age_wit
   ) 
 
 ##replace decline to answer (88) and -888 (NA) values with NA
@@ -62,17 +64,15 @@ N <-
   a %>% 
   count() %>% 
   pull(n)
-
 ```
 
 # Score
-
 ## Total caregiver adversities
 ```{r}
 parent_types <-
   a %>% 
   dplyr::select(
-    disas:death,
+    disaster:death,
     bully:other1,
     other2,
     -ill_child_exp_dir
@@ -87,7 +87,13 @@ a <-
     parent_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(parent_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+     function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -116,7 +122,13 @@ a <-
     parent_sum_sev = 
       pmap_dbl(
       dplyr::select(., all_of(parent_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -142,7 +154,13 @@ a <-
     since_child_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(since_child_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -154,7 +172,6 @@ a %>%
 ```
 
 ## Total subjective of severity caregiver adversities since child's birth
-
 ```{r}
 # dplyr::select names of severity ratings for only events that could have occurred since child's birth 
 parent_sev_since_child <-
@@ -194,7 +211,6 @@ a_sc <-
     paste0(a_sc_names, "since_child_sev")
   ) %>% 
   bind_cols(a_sc, .) 
-
 ```
 
 ```{r}
@@ -218,7 +234,13 @@ a <-
     parent_sum_sev_since_child = 
       pmap_dbl(
       dplyr::select(., all_of(since_child_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -228,7 +250,6 @@ a %>%
   ggplot(aes(parent_sum_sev_since_child)) +
   geom_histogram(binwidth = 5)
 ```
-
 
 ## Total adversities during pregnancy and by trimester
 ```{r}
@@ -260,22 +281,46 @@ a <-
     preg_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(preg_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     preg_trim1_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(trim1_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     preg_trim2_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(trim2_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     preg_trim3_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(trim3_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -437,22 +482,46 @@ a <-
     sum_sev_preg = 
       pmap_dbl(
       dplyr::select(., all_of(preg_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     sum_sev_trim1 = 
       pmap_dbl(
       dplyr::select(., all_of(trim1_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     sum_sev_trim2 = 
       pmap_dbl(
       dplyr::select(., all_of(trim2_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     sum_sev_trim3 = 
       pmap_dbl(
       dplyr::select(., all_of(trim3_sev_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -469,7 +538,6 @@ a %>%
 ```
 
 ## Adversities to which child was exposed (total vs. direct vs. witnessed)
-
 ```{r}
 child_exp_types <-
   a %>% 
@@ -494,17 +562,35 @@ a <-
     child_num_types = 
       pmap_dbl(
       dplyr::select(., all_of(child_exp_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     child_num_wit_types = 
       pmap_dbl(
       dplyr::select(., all_of(child_exp_wit_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     child_num_dir_types = 
       pmap_dbl(
       dplyr::select(., all_of(child_exp_dir_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -522,8 +608,8 @@ a %>%
   ggplot(aes(child_num_dir_types)) +
   geom_histogram(binwidth = 1)
 ```
-## Total perceived severity of adversity to which child was exposed (direct or happened during child's lifetime)
 
+## Total perceived severity of adversity to which child was exposed (direct or happened during child's lifetime)
 ```{r}
 sev_child_ratings <-
   a %>% 
@@ -548,16 +634,34 @@ a <-
     child_sum_sev = 
       pmap_dbl(
       dplyr::select(., all_of(sev_child_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     child_sum_sev_dir =  pmap_dbl(
       dplyr::select(., all_of(sev_child_dir_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     child_sum_sev_indir = pmap_dbl(
       dplyr::select(., all_of(sev_child_indir_ratings)),
-      function(...) sum(c(...), na.rm = TRUE)
-    ),
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
+    )
   )
 ```
 
@@ -572,7 +676,6 @@ a %>%
 ```
 
 ## Wrangle parent ages of onset and offset
-
 ```{r}
 parent_age_onsets <- 
   a %>% 
@@ -713,15 +816,33 @@ a <-
     parent_num_childhood = 
       pmap_dbl(
       dplyr::select(., all_of(parent_childhood_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     parent_num_adulthood = pmap_dbl(
       dplyr::select(., all_of(parent_adulthood_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     ),
     parent_num_precon= pmap_dbl(
       dplyr::select(., all_of(parent_precon_types)),
-      function(...) sum(c(...), na.rm = TRUE)
+      function(...) {
+        if (all(is.na(c(...)))) {
+          NA
+        } else {
+          sum(c(...), na.rm = TRUE)
+        }
+      }
     )
   )
 ```
@@ -834,7 +955,6 @@ a_child_ages_dir_lf <-
     key,
     age_years
   )
-
 ```
 
 ```{r}
@@ -859,9 +979,7 @@ a_child_ages_dir_lf %>%
 ```
 
 # Summary descriptives tables
-
 ## Parent exposures 
-
 ```{r}
 parent_apca_table <-
   a %>% 
@@ -984,7 +1102,7 @@ parent_apca_table <-
 
 write_csv(
   parent_apca_table,
-  "~/Box/lucy_king_files/MoD/APCA/parent_apca_table.csv"
+  "FILE PATH HERE"
 )
 ```
 
@@ -1026,9 +1144,7 @@ parent_apca_table %>%
   )
 ```
 
-  
 ## Child indirect exposures
-
 ```{r}
 child_apca_table <- 
   a %>% 
@@ -1168,12 +1284,11 @@ child_apca_table <-
 
 write_csv(
   child_apca_table,
-  "~/Box/lucy_king_files/MoD/APCA/child_indir_apca_table.csv"
+  "FILE PATH HERE"
 )
 ```
 
 ## Child direct exposures
-
 ```{r}
 child_apca_dir_table <- 
   a %>% 
@@ -1262,7 +1377,7 @@ child_apca_dir_table
 
 write_csv(
   child_apca_dir_table, 
-  "~/Box/lucy_king_files/MoD/APCA/child_apca_dir_table.csv"
+  "FILE PATH HERE"
   )
 ```
 
@@ -1270,7 +1385,6 @@ write_csv(
 ```{r}
 write_csv(
   a, 
-  "~/Box/Mooddata_Coordinating/MOD/Data/REDCap/APCA/apca_scored_20210923.csv"
+  "FILE PATH HERE"
 )
 ```
-
